@@ -1,0 +1,168 @@
+{
+  "common": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "loading": "Loading…",
+    "on": "On",
+    "off": "Off",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "userId": "User ID"
+  },
+  "language": {
+    "label": "Language",
+    "triggerLabel": "Language: {{language}}",
+    "followSystem": "System",
+    "followSystemWithLanguage": "System ({{language}})",
+    "enUS": "English",
+    "zhCN": "中文"
+  },
+  "errors": {
+    "notFound": {
+      "code": "404",
+      "title": "Page not found",
+      "description": "The page you're looking for doesn't exist or may have been moved.",
+      "backHome": "Back to home"
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. You can try again or return to the home page.",
+      "tryAgain": "Try again",
+      "backHome": "Back to home"
+    }
+  },
+  "starter": {
+    "badge": "Eazo App Starter",
+    "title": "Build your next app with Eazo",
+    "subtitle": "You now have a clean foundation with auth, data access, and platform integrations ready for your product.",
+    "steps": {
+      "readDocs": {
+        "title": "Read the docs",
+        "desc": "Open AGENTS.md and README.md to understand the template architecture.",
+        "code": "AGENTS.md + README.md"
+      },
+      "replacePage": {
+        "title": "Replace this page",
+        "desc": "Move your product UI into src/components and keep page.tsx thin.",
+        "code": "src/app/page.tsx"
+      },
+      "firstFeature": {
+        "title": "Build your first feature",
+        "desc": "Add API routes under src/app/api and call them from typed helpers.",
+        "code": "src/app/api/*"
+      },
+      "translations": {
+        "title": "Add translations",
+        "desc": "Edit en-US / zh-CN strings in src/i18n/locales. LanguageSwitcher and I18nProvider in layout.tsx are already wired.",
+        "code": "src/i18n/locales/"
+      }
+    },
+    "nextCommand": {
+      "title": "Next command",
+      "desc": "Start developing and iterate in real time.",
+      "command": "bun dev"
+    }
+  },
+  "stagemuse": {
+    "brand": {
+      "name": "StageMuse",
+      "sub": "Show Proposal Workbench"
+    },
+    "version": {
+      "v1": "V1",
+      "v2": "V2",
+      "highlight": "Highlight changes"
+    },
+    "left": {
+      "title": "Requirements & Ideas"
+    },
+    "req": {
+      "title": "Structured Requirements",
+      "loadCase": "Load demo case",
+      "empty": "Paste the show brief, or click \"Load demo case\" to start.",
+      "placeholder": "e.g. 3-min tech brand opening show, theme \"From Individual to Symbiosis\", 12 dancers, main LED, two side entries, emotion from restraint to burst…",
+      "parse": "Parse requirements",
+      "parsing": "Parsing…",
+      "fixed": "Confirmed",
+      "creative": "Open to create",
+      "pending": "To confirm",
+      "genDir": "Generate directions",
+      "generating": "Generating…"
+    },
+    "dir": {
+      "title": "Creative Directions",
+      "hint": "Pick one direction",
+      "diff": "Difficulty"
+    },
+    "plan": {
+      "title": "Show Proposal Table",
+      "empty": "Pick a creative direction and the time-based proposal table will appear here.",
+      "note": "Click any cell to edit; the formation column is a schematic.",
+      "estimate": "est.",
+      "loading": "Building plan…"
+    },
+    "col": {
+      "time": "Timecode",
+      "music": "Music / Cue",
+      "speech": "Lyrics / Lines",
+      "formation": "Cast & Formation",
+      "visual": "Visual",
+      "lighting": "Lighting",
+      "props": "Props"
+    },
+    "fb": {
+      "title": "Director Feedback",
+      "placeholder": "e.g. Change to 8 dancers; make the last 30s more powerful; no handheld props.",
+      "example": "Fill example feedback",
+      "analyze": "Analyze impact",
+      "analyzing": "Analyzing…"
+    },
+    "prop": {
+      "title": "Impact Analysis · Change Preview",
+      "hint": "Check the changes to apply; unchecked items stay unchanged.",
+      "apply": "Confirm & build V2"
+    },
+    "status": {
+      "title": "Version Log"
+    },
+    "log": {
+      "v1": "Initial plan generated",
+      "v2": "Linked changes applied"
+    },
+    "ai": {
+      "badge": "AI generated · draft",
+      "fallback": "Preset sample",
+      "placeholder": "Placeholder (pending)"
+    },
+    "toast": {
+      "caseLoaded": "Demo case loaded",
+      "dirSelected": "V1 plan generated",
+      "v2Ready": "V2 built — switch to view changes",
+      "noChange": "Please check at least one change",
+      "needInput": "Please enter the show brief first",
+      "needPlan": "Please generate a plan first",
+      "needFb": "Please enter director feedback first",
+      "reqDone": "Requirements parsed",
+      "dirDone": "Directions generated",
+      "aiFallback": "AI unavailable — preset sample used",
+      "failed": "Something went wrong, please retry",
+      "needLogin": "Please sign in to use AI features"
+    },
+    "validate": {
+      "title": "Consistency Check",
+      "checking": "Checking…",
+      "clean": "No issues found — the plan is consistent.",
+      "rule": "Rule",
+      "ai": "Semantic",
+      "sevError": "Error",
+      "sevWarning": "Warning",
+      "sevInfo": "Info",
+      "row": "Seg {{n}}",
+      "overall": "Overall",
+      "suggest": "Suggestion"
+    }
+  }
+}

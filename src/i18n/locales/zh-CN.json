@@ -1,0 +1,168 @@
+{
+  "common": {
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "loading": "加载中…",
+    "on": "开",
+    "off": "关",
+    "close": "关闭",
+    "save": "保存",
+    "cancel": "取消",
+    "edit": "编辑",
+    "delete": "删除",
+    "userId": "用户 ID"
+  },
+  "language": {
+    "label": "语言",
+    "triggerLabel": "语言：{{language}}",
+    "followSystem": "跟随系统",
+    "followSystemWithLanguage": "跟随系统（{{language}}）",
+    "enUS": "English",
+    "zhCN": "中文"
+  },
+  "errors": {
+    "notFound": {
+      "code": "404",
+      "title": "页面未找到",
+      "description": "你访问的页面不存在，或已被移动。",
+      "backHome": "返回首页"
+    },
+    "generic": {
+      "title": "出了点问题",
+      "description": "发生了意外错误。你可以重试，或返回首页继续。",
+      "tryAgain": "重试",
+      "backHome": "返回首页"
+    }
+  },
+  "starter": {
+    "badge": "Eazo 应用模板",
+    "title": "用 Eazo 构建你的下一个应用",
+    "subtitle": "你现在拥有干净的基础：认证、数据访问与平台能力已就绪，可直接开发产品功能。",
+    "steps": {
+      "readDocs": {
+        "title": "阅读文档",
+        "desc": "打开 AGENTS.md 与 README.md，了解模板架构与约定。",
+        "code": "AGENTS.md + README.md"
+      },
+      "replacePage": {
+        "title": "替换本页",
+        "desc": "将产品 UI 放到 src/components 下，并保持 page.tsx 为薄入口。",
+        "code": "src/app/page.tsx"
+      },
+      "firstFeature": {
+        "title": "开发第一个功能",
+        "desc": "在 src/app/api 添加接口，并通过 src/lib/api 中的类型化 helper 调用。",
+        "code": "src/app/api/*"
+      },
+      "translations": {
+        "title": "补充翻译",
+        "desc": "在 src/i18n/locales 编辑中英文文案；layout 已接入 LanguageSwitcher 与 I18nProvider。",
+        "code": "src/i18n/locales/"
+      }
+    },
+    "nextCommand": {
+      "title": "下一步命令",
+      "desc": "启动开发服务器，实时迭代你的产品。",
+      "command": "bun dev"
+    }
+  },
+  "stagemuse": {
+    "brand": {
+      "name": "StageMuse 舞境",
+      "sub": "秀演提案工作台"
+    },
+    "version": {
+      "v1": "V1",
+      "v2": "V2",
+      "highlight": "高亮变化"
+    },
+    "left": {
+      "title": "需求与创意"
+    },
+    "req": {
+      "title": "结构化需求",
+      "loadCase": "加载固定案例",
+      "empty": "粘贴节目要求，或点击「加载固定案例」开始。",
+      "placeholder": "例：3分钟科技品牌开场秀，主题「从个体到共生」，12名舞者，主LED屏，左右出入口，情绪从克制到爆发……",
+      "parse": "解析需求",
+      "parsing": "解析中…",
+      "fixed": "已确定",
+      "creative": "可创作",
+      "pending": "待确认",
+      "genDir": "生成创意方向",
+      "generating": "生成中…"
+    },
+    "dir": {
+      "title": "创意方向",
+      "hint": "选择一个方向",
+      "diff": "难度"
+    },
+    "plan": {
+      "title": "图文方案表",
+      "empty": "选择一个创意方向后，这里会生成按时间段组织的图文方案表。",
+      "note": "单元格可直接点击编辑；队形列为示意图。",
+      "estimate": "预计",
+      "loading": "生成方案中…"
+    },
+    "col": {
+      "time": "节目时间码",
+      "music": "音乐/段落",
+      "speech": "歌词/台词",
+      "formation": "人员与队形",
+      "visual": "视觉",
+      "lighting": "灯光",
+      "props": "道具"
+    },
+    "fb": {
+      "title": "导演反馈",
+      "placeholder": "例：人数改成8人；最后30秒更有力量感；不使用手持道具。",
+      "example": "填入示例反馈",
+      "analyze": "分析影响",
+      "analyzing": "分析中…"
+    },
+    "prop": {
+      "title": "影响分析 · 修改预览",
+      "hint": "勾选允许应用的修改项，未勾选项不会改变。",
+      "apply": "确认并生成 V2"
+    },
+    "status": {
+      "title": "版本记录"
+    },
+    "log": {
+      "v1": "初版方案生成",
+      "v2": "联动修改应用"
+    },
+    "ai": {
+      "badge": "AI 生成 · 草稿",
+      "fallback": "预置示例",
+      "placeholder": "占位（待接入）"
+    },
+    "toast": {
+      "caseLoaded": "已加载固定案例",
+      "dirSelected": "已生成 V1 方案",
+      "v2Ready": "已生成 V2，切换查看变化",
+      "noChange": "请至少勾选一项修改",
+      "needInput": "请先输入节目要求",
+      "needPlan": "请先生成方案",
+      "needFb": "请先输入导演反馈",
+      "reqDone": "需求解析完成",
+      "dirDone": "创意方向已生成",
+      "aiFallback": "AI 暂不可用，已使用预置示例",
+      "failed": "操作失败，请重试",
+      "needLogin": "请先登录后再使用 AI 功能"
+    },
+    "validate": {
+      "title": "一致性检查",
+      "checking": "检查中…",
+      "clean": "未发现问题，方案一致。",
+      "rule": "规则",
+      "ai": "语义",
+      "sevError": "错误",
+      "sevWarning": "提醒",
+      "sevInfo": "提示",
+      "row": "第{{n}}段",
+      "overall": "整体",
+      "suggest": "建议"
+    }
+  }
+}
