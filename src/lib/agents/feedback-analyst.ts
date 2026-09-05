@@ -22,11 +22,11 @@ function normalize(items: unknown, level: ImpactItem["level"], performance: Perf
   });
 }
 
-export async function analyzeFeedback(input: { feedback: string; performance: PerformanceDraft; plan: PlanSnapshot; viewerUserId?: string }): Promise<AgentResult<ImpactReport>> {
+export async function analyzeFeedback(input: { feedback: string; performance: PerformanceDraft; plan: PlanSnapshot; viewerUserId?: string; confirmedTitles?: string[] }): Promise<AgentResult<ImpactReport>> {
   try {
     const { data, raw } = await runAgentJSON<ImpactReport>({
       system: SYSTEM,
-      user: `演绎形式：${JSON.stringify(input.performance)}\nCue表：${JSON.stringify(input.plan.rows)}\n\n导演反馈：${input.feedback}`,
+      user: `演绎形式：${JSON.stringify(input.performance)}\nCue表：${JSON.stringify(input.plan.rows)}\n\n导演反馈：${input.feedback}\n\n本轮已经确认并已更新到方案的影响项：${input.confirmedTitles?.join("；") || "无"}。只分析尚未解决的影响，不要重复这些已完成项。`,
       viewerUserId: input.viewerUserId,
     });
     const report = {

@@ -145,10 +145,10 @@
     },
     "prop": {
       "title": "影响分析 · 修改预览",
-      "hint": "勾选允许应用的修改项，未勾选项不会改变。",
+      "hint": "每次只确认一项。生成新版后，系统会按新方案重新分析其余影响。",
       "apply": "确认并生成 V2"
     },
-    "impact": { "must": "必定受影响", "maybe": "可能受影响（请选择）", "unaffected": "不受影响", "revising": "正在生成完整 V2…" },
+    "impact": { "must": "必定受影响", "maybe": "可能受影响", "unaffected": "不受影响", "revising": "正在生成新版并重新分析…", "confirmOne": "确认本项并重算", "skip": "暂不处理", "complete": "本轮没有待确认影响。" },
     "status": {
       "title": "版本记录"
     },

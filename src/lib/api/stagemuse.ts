@@ -42,8 +42,8 @@ export const stageMuseApi = {
     post<PerformanceDraft>("/api/agents/performance", { project, requirement, direction }),
   generatePlan: (project: ProjectBrief, performance: PerformanceDraft) =>
     post<PlanSnapshot>("/api/agents/plan", { project, performance }),
-  analyzeFeedback: (feedback: string, performance: PerformanceDraft, plan: PlanSnapshot) =>
-    post<ImpactReport>("/api/agents/feedback", { feedback, performance, plan }),
+  analyzeFeedback: (feedback: string, performance: PerformanceDraft, plan: PlanSnapshot, confirmedTitles: string[] = []) =>
+    post<ImpactReport>("/api/agents/feedback", { feedback, performance, plan, confirmedTitles }),
   generateRevision: (feedback: string, performance: PerformanceDraft, plan: PlanSnapshot, impacts: ImpactItem[]) =>
     post<RevisionSnapshot>("/api/agents/revision", { feedback, performance, plan, impacts }),
   validatePlan: (plan: PlanSnapshot) =>

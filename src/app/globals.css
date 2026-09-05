@@ -205,7 +205,13 @@ body {
 .sm-rg-t { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 2px solid var(--sm-line); font-size: 12px; font-weight: 900; color: var(--sm-ink); }
 .sm-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--sm-line); }
 .sm-dot.fx { background: var(--sm-blue); } .sm-dot.cr { background: var(--sm-green); } .sm-dot.pd { background: var(--sm-yellow); }
-.sm-rg ul { margin: 0; padding: 7px 10px 9px 22px; font-size: 12px; line-height: 1.5; color: var(--sm-ink); }
+.sm-rg ul { margin: 0; padding: 7px 10px 9px; font-size: 12px; line-height: 1.5; color: var(--sm-ink); }
+.sm-rg-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 7px; padding: 6px 4px; border-bottom: 1px solid color-mix(in srgb, var(--sm-line) 20%, transparent); }
+.sm-rg-item:last-child { border-bottom: 0; }
+.sm-rg-input { min-width: 0; width: 100%; min-height: 3.1em; resize: vertical; border: 0; background: transparent; color: var(--sm-ink); line-height: 1.45; overflow-wrap: anywhere; }
+.sm-rg-actions { display: flex; gap: 4px; }
+.sm-rg-action { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border: 2px solid var(--sm-line); border-radius: 8px; background: var(--sm-paper); color: var(--sm-ink); }
+.sm-rg-action:hover { background: var(--sm-yellow); }.sm-rg-action.danger:hover { background: #ffd9ce; color: var(--sm-red); }
 
 /* 创意方向卡 */
 .sm-dcard { display: block; width: 100%; text-align: left; border: 2px solid var(--sm-line); background: #fffbee; border-radius: 16px; padding: 11px; margin-bottom: 10px; cursor: pointer; transition: transform .16s ease, background .16s ease; }

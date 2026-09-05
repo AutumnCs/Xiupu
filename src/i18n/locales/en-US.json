@@ -145,10 +145,10 @@
     },
     "prop": {
       "title": "Impact Analysis · Change Preview",
-      "hint": "Check the changes to apply; unchecked items stay unchanged.",
+      "hint": "Confirm one item at a time. After a new version is built, remaining impacts are analysed again.",
       "apply": "Confirm & build V2"
     },
-    "impact": { "must": "Definitely affected", "maybe": "Possibly affected — choose", "unaffected": "Not affected", "revising": "Building full V2…" },
+    "impact": { "must": "Definitely affected", "maybe": "Possibly affected", "unaffected": "Not affected", "revising": "Building the new version and reassessing…", "confirmOne": "Confirm this and reassess", "skip": "Skip for now", "complete": "No impacts remain to confirm in this round." },
     "status": {
       "title": "Version Log"
     },

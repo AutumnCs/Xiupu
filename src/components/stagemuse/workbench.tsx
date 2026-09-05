@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
 import { stageMuseApi } from "@/lib/api/stagemuse";
 import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
@@ -10,6 +11,7 @@ import { PerformanceEditor } from "./performance-editor";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
+import { getNextImpact } from "@/lib/project-state/impact-queue";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -50,7 +52,8 @@ export function Workbench() {
   const [showDiff, setShowDiff] = useState(true);
   const [feedback, setFeedback] = useState("");
   const [impactReport, setImpactReport] = useState<ImpactReport | null>(null);
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [skippedImpactIds, setSkippedImpactIds] = useState<Set<string>>(new Set());
+  const [confirmedImpactTitles, setConfirmedImpactTitles] = useState<string[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [validating, setValidating] = useState(false);
@@ -100,6 +103,7 @@ export function Workbench() {
 
   const activePlan = current === "v2" && v2 ? v2 : v1;
   const activePerformance = current === "v2" && performanceV2 ? performanceV2 : performanceV1;
+  const nextImpact = impactReport ? getNextImpact(impactReport, skippedImpactIds) : null;
 
   // ---- 节点 1：解析需求 ----
   async function onParse() {
@@ -115,6 +119,7 @@ export function Workbench() {
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
       setReqFallback(!!r.fallback);
+      setConfirmedImpactTitles([]);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.reqDone"));
     } catch {
       handleErr();
@@ -170,6 +175,7 @@ export function Workbench() {
       setV2(null);
       setCurrent("v1");
       setImpactReport(null);
+      setConfirmedImpactTitles([]);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.performance.done"), {
         id: loadingToast,
       });
@@ -185,13 +191,13 @@ export function Workbench() {
     setLoading("plan");
     try {
       const r = await stageMuseApi.generatePlan(project, performanceV1);
-      setV1(r.data); setV2(null); setCurrent("v1"); setImpactReport(null); addVersion("v1", t("stagemuse.log.v1"));
+      setV1(r.data); setV2(null); setCurrent("v1"); setImpactReport(null); setConfirmedImpactTitles([]); addVersion("v1", t("stagemuse.log.v1"));
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"));
       runValidate(r.data);
     } catch { handleErr(); } finally { setLoading(null); }
   }
 
-  // ---- 节点 5：反馈影响分析（占位） ----
+  // ---- 节点 5：反馈影响分析 ----
   async function onAnalyze() {
     if (!activePlan || !activePerformance) return toast.error(t("stagemuse.toast.needPlan"));
     if (!feedback.trim()) return toast.error(t("stagemuse.toast.needFb"));
@@ -199,7 +205,8 @@ export function Workbench() {
     try {
       const r = await stageMuseApi.analyzeFeedback(feedback, activePerformance, activePlan);
       setImpactReport(r.data);
-      setChecked(Object.fromEntries([...r.data.must, ...r.data.maybe].map((item) => [item.id, item.level === "must"])));
+      setSkippedImpactIds(new Set());
+      setConfirmedImpactTitles([]);
       if (r.fallback) toast.message(t("stagemuse.toast.aiFallback"));
     } catch {
       handleErr();
@@ -208,15 +215,19 @@ export function Workbench() {
     }
   }
 
-  // ---- 节点 6：确认应用 → 生成 V2（本地联动，符合"先预览后应用"） ----
-  async function onApply() {
-    if (!activePlan || !activePerformance || !impactReport) return;
-    const chosen = [...impactReport.must, ...impactReport.maybe].filter((item) => checked[item.id]);
-    if (!chosen.length) return toast.error(t("stagemuse.toast.noChange"));
+  // ---- 节点 6：逐项确认 → 生成 V2 → 重新分析剩余影响 ----
+  async function onApply(impact: ImpactItem) {
+    if (!activePlan || !activePerformance) return;
     setLoading("revision");
     try {
-      const r = await stageMuseApi.generateRevision(feedback, activePerformance, activePlan, chosen as ImpactItem[]);
-      setPerformanceV2(r.data.performance); setV2(r.data.plan); setCurrent("v2"); addVersion("v2", `${t("stagemuse.log.v2")}（${chosen.length}）`); toast.success(t("stagemuse.toast.v2Ready")); runValidate(r.data.plan);
+      const r = await stageMuseApi.generateRevision(feedback, activePerformance, activePlan, [impact]);
+      const nextConfirmedTitles = [...confirmedImpactTitles, impact.title];
+      setPerformanceV2(r.data.performance); setV2(r.data.plan); setCurrent("v2"); addVersion("v2", `${t("stagemuse.log.v2")}（1）`); runValidate(r.data.plan);
+      const reassessed = await stageMuseApi.analyzeFeedback(feedback, r.data.performance, r.data.plan, nextConfirmedTitles);
+      setConfirmedImpactTitles(nextConfirmedTitles);
+      setImpactReport(reassessed.data);
+      setSkippedImpactIds(new Set());
+      toast.success(t("stagemuse.toast.v2Ready"));
     } catch { handleErr(); } finally { setLoading(null); }
   }
 
@@ -509,12 +520,8 @@ export function Workbench() {
               <p className="mb-2 text-[11px]" style={{ color: "var(--sm-muted)" }}>
                 {t("stagemuse.prop.hint")}
               </p>
-              <ImpactGroup title={t("stagemuse.impact.must")} items={impactReport.must} checked={checked} onChange={setChecked} selectable />
-              <ImpactGroup title={t("stagemuse.impact.maybe")} items={impactReport.maybe} checked={checked} onChange={setChecked} selectable />
-              <ImpactGroup title={t("stagemuse.impact.unaffected")} items={impactReport.unaffected} checked={checked} onChange={setChecked} />
-              <button className="sm-solid w-full" onClick={() => void onApply()} disabled={loading === "revision"}>
-                {loading === "revision" ? t("stagemuse.impact.revising") : t("stagemuse.prop.apply")}
-              </button>
+              {nextImpact ? <ImpactDecision impact={nextImpact} loading={loading === "revision"} onConfirm={() => void onApply(nextImpact)} onSkip={() => setSkippedImpactIds((current) => new Set([...current, nextImpact.id]))} /> : <p className="mb-3 text-xs font-bold" style={{ color: "var(--sm-green)" }}>{t("stagemuse.impact.complete")}</p>}
+              <ImpactGroup title={t("stagemuse.impact.unaffected")} items={impactReport.unaffected} />
             </div>
           </section>
         )}
@@ -568,10 +575,12 @@ function RequirementGroup({ tone, label, items, onChange }: { tone: RequirementI
       </div>
       <ul>
         {groupItems.map((item) => (
-          <li key={item.id} className="flex gap-1">
-            <input className="min-w-0 flex-1 bg-transparent" value={item.text} onChange={(event) => onChange(items.map((current) => current.id === item.id ? { ...current, text: event.target.value } : current))} />
-            <button type="button" className="sm-ghost px-2 py-0 text-[10px]" onClick={() => onChange(items.map((current) => current.id === item.id ? toggleRequirementLock(current) : current))}>{item.locked ? t("stagemuse.req.unlock") : t("stagemuse.req.lock")}</button>
-            <button type="button" className="sm-ghost px-2 py-0 text-[10px]" onClick={() => onChange(items.filter((current) => current.id !== item.id))}>{t("stagemuse.req.remove")}</button>
+          <li key={item.id} className="sm-rg-item">
+            <textarea rows={2} className="sm-rg-input" value={item.text} onChange={(event) => onChange(items.map((current) => current.id === item.id ? { ...current, text: event.target.value } : current))} />
+            <span className="sm-rg-actions">
+              <button type="button" className="sm-rg-action" aria-label={item.locked ? t("stagemuse.req.unlock") : t("stagemuse.req.lock")} title={item.locked ? t("stagemuse.req.unlock") : t("stagemuse.req.lock")} onClick={() => onChange(items.map((current) => current.id === item.id ? toggleRequirementLock(current) : current))}>{item.locked ? <LockKeyholeOpen size={15} /> : <Lock size={15} />}</button>
+              <button type="button" className="sm-rg-action danger" aria-label={t("stagemuse.req.remove")} title={t("stagemuse.req.remove")} onClick={() => onChange(items.filter((current) => current.id !== item.id))}><Trash2 size={15} /></button>
+            </span>
           </li>
         ))}
       </ul>
@@ -637,6 +646,13 @@ function DepartmentRequirements({ plan, selectedCueIndex, onSelectCue }: { plan:
   );
 }
 
-function ImpactGroup({ title, items, checked, onChange, selectable = false }: { title: string; items: ImpactItem[]; checked: Record<string, boolean>; onChange: (next: Record<string, boolean>) => void; selectable?: boolean }) {
-  return <div className="mb-3"><b className="text-xs">{title}</b>{items.map((item) => <div key={item.id} className="sm-prop"><input type="checkbox" disabled={!selectable} checked={selectable ? !!checked[item.id] : true} onChange={(event) => onChange({ ...checked, [item.id]: event.target.checked })} /><div><h4>{item.title}</h4><p className="reason">{item.detail}</p><div className="sm-chips">{item.departments.map((department) => <span key={department} className="sm-chip">{department}</span>)}</div></div></div>)}</div>;
+function ImpactDecision({ impact, loading, onConfirm, onSkip }: { impact: ImpactItem; loading: boolean; onConfirm: () => void; onSkip: () => void }) {
+  const { t } = useTranslation();
+  const label = impact.level === "must" ? t("stagemuse.impact.must") : t("stagemuse.impact.maybe");
+  return <div className="mb-3"><b className="text-xs">{label}</b><div className="sm-prop"><div><h4>{impact.title}</h4><p className="reason">{impact.detail}</p><div className="sm-chips">{impact.departments.map((department) => <span key={department} className="sm-chip">{department}</span>)}</div><div className="mt-3 flex gap-2"><button className="sm-solid flex-1" onClick={onConfirm} disabled={loading}>{loading ? t("stagemuse.impact.revising") : t("stagemuse.impact.confirmOne")}</button><button className="sm-ghost" onClick={onSkip} disabled={loading}>{t("stagemuse.impact.skip")}</button></div></div></div></div>;
+}
+
+function ImpactGroup({ title, items }: { title: string; items: ImpactItem[] }) {
+  if (!items.length) return null;
+  return <div className="mb-3"><b className="text-xs">{title}</b>{items.map((item) => <div key={item.id} className="sm-prop"><div><h4>{item.title}</h4><p className="reason">{item.detail}</p></div></div>)}</div>;
 }

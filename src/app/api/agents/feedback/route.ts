@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
   let feedback = "";
   let plan: PlanSnapshot | null = null;
   let performance: PerformanceDraft | null = null;
+  let confirmedTitles: string[] = [];
   try {
     const body = await request.json();
     feedback = typeof body?.feedback === "string" ? body.feedback.trim() : "";
     if (body?.plan && Array.isArray(body.plan.rows)) plan = body.plan as PlanSnapshot;
     if (body?.performance && Array.isArray(body.performance.sections)) performance = body.performance as PerformanceDraft;
+    if (Array.isArray(body?.confirmedTitles)) confirmedTitles = body.confirmedTitles.map(String).slice(0, 12);
   } catch {
     return jsonWithGuest({ ok: false, error: "invalid_body" }, guest, { status: 400 });
   }
@@ -26,7 +28,7 @@ export async function POST(request: NextRequest) {
   if (!plan || !performance) return jsonWithGuest({ ok: false, error: "missing_plan" }, guest, { status: 400 });
 
   try {
-    const result = await orchestrator.runFeedback(feedback, performance, plan, guest.guestId);
+    const result = await orchestrator.runFeedback(feedback, performance, plan, guest.guestId, confirmedTitles);
     return jsonWithGuest({ ok: true, result }, guest);
   } catch (err) {
     if (err instanceof AppAIUnavailableError) {

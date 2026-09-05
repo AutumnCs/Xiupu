@@ -61,8 +61,9 @@ export const orchestrator = {
     performance: PerformanceDraft,
     plan: PlanSnapshot,
     viewerUserId?: string,
+    confirmedTitles: string[] = [],
   ): Promise<AgentResult<ImpactReport>> {
-    return analyzeFeedback({ feedback, performance, plan, viewerUserId });
+    return analyzeFeedback({ feedback, performance, plan, viewerUserId, confirmedTitles });
   },
 
   async runRevision(feedback: string, performance: PerformanceDraft, plan: PlanSnapshot, impacts: ImpactItem[], viewerUserId?: string): Promise<AgentResult<RevisionSnapshot>> {
