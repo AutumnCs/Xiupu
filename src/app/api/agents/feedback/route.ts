@@ -4,6 +4,8 @@ import { orchestrator } from "@/lib/agents/orchestrator";
 import { AppAIUnavailableError, isProviderConfigured } from "@/lib/ai/provider";
 import type { PlanSnapshot } from "@/lib/agents/types";
 
+export const maxDuration = 60;
+
 /** POST /api/agents/feedback — 反馈解析 + 影响分析 Agent */
 export async function POST(request: NextRequest) {
   const guest = requireGuest(request);

@@ -104,6 +104,8 @@
     "dir": {
       "title": "创意方向",
       "hint": "选择一个方向",
+      "selectedHint": "已选中，可先调整内容，再生成执行方案",
+      "confirm": "确认演绎形式并生成 Cue 表",
       "diff": "难度"
     },
     "plan": {
@@ -111,7 +113,15 @@
       "empty": "选择一个创意方向后，这里会生成按时间段组织的图文方案表。",
       "note": "单元格可直接点击编辑；队形列为示意图。",
       "estimate": "预计",
-      "loading": "生成方案中…"
+      "loading": "正在构建 Cue 表…",
+      "workingToast": "正在把创意方向转成执行方案",
+      "workingToastDescription": "生成完成后，Cue 表会直接出现在工作台中央。",
+      "workingInline": "正在生成第一版方案，可继续查看或修改已选方向。",
+      "workingTitle": "正在构建第一版 Cue 表",
+      "workingDescription": "正在把创意方向整理成可执行的时间段、舞台提示与部门协作信息。生成完成后会直接展开在这里。",
+      "workingOutputTime": "时间段",
+      "workingOutputCue": "Cue 表",
+      "workingOutputDepartments": "部门协作"
     },
     "col": {
       "time": "节目时间码",
@@ -139,7 +149,30 @@
     "status": {
       "title": "版本记录"
     },
-    "department": { "title": "部门需求", "music": "音乐", "visual": "视觉", "lighting": "灯光", "performer": "演员/调度", "props": "道具" },
+    "department": {
+      "title": "部门需求",
+      "autoExtract": "按部门汇总",
+      "switchLabel": "切换部门",
+      "hint": "选择部门查看各 Cue 的执行项；点击条目即可联动定位。",
+      "cue": "Cue {{n}}",
+      "music": "音乐",
+      "visual": "视觉",
+      "lighting": "灯光",
+      "performer": "演员/调度",
+      "props": "道具"
+    },
+    "timeline": {
+      "title": "Cue 时间带",
+      "cueCount": "{{count}} 个 Cue",
+      "cue": "Cue {{n}}",
+      "hint": "选择一个 Cue 查看执行重点；可直接修改时间码，其他内容在下方方案表中编辑。",
+      "noMusic": "未填写音乐",
+      "timeLabel": "时间码",
+      "music": "音乐 / 段落",
+      "formation": "人员 / 调度",
+      "visual": "视觉",
+      "lighting": "灯光"
+    },
     "log": {
       "v1": "初版方案生成",
       "v2": "联动修改应用"

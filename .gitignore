@@ -195,3 +195,7 @@ dist
 .eazo/
 feishu-*.png
 qr-*.png
+.vercel/
+.vercel-cli/
+
+.vercel

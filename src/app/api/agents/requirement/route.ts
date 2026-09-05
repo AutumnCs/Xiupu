@@ -3,6 +3,8 @@ import { jsonWithGuest, requireGuest } from "@/lib/auth";
 import { orchestrator } from "@/lib/agents/orchestrator";
 import { AppAIUnavailableError, isProviderConfigured } from "@/lib/ai/provider";
 
+export const maxDuration = 60;
+
 /** POST /api/agents/requirement — 需求解析 Agent */
 export async function POST(request: NextRequest) {
   const guest = requireGuest(request);

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { stageMuseApi } from "@/lib/api/stagemuse";
 import { FormationSvg } from "./formation-svg";
+import { CueTimeline } from "./cue-timeline";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { isTextMaterial } from "@/lib/project-state/materials";
+import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -40,6 +42,7 @@ export function Workbench() {
   const [v1, setV1] = useState<PlanSnapshot | null>(null);
   const [v2, setV2] = useState<PlanSnapshot | null>(null);
   const [current, setCurrent] = useState<"v1" | "v2">("v1");
+  const [selectedCueIndex, setSelectedCueIndex] = useState<number | null>(null);
   const [showDiff, setShowDiff] = useState(true);
   const [feedback, setFeedback] = useState("");
   const [proposals, setProposals] = useState<ChangeProposal[] | null>(null);
@@ -47,6 +50,7 @@ export function Workbench() {
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [validating, setValidating] = useState(false);
+  const validationRun = useRef(0);
 
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -76,14 +80,15 @@ export function Workbench() {
 
   // ---- 节点 4：一致性检查（方案生成/更新后自动运行，满足 AC06） ----
   async function runValidate(plan: PlanSnapshot) {
+    const run = ++validationRun.current;
     setValidating(true);
     try {
       const r = await stageMuseApi.validatePlan(plan);
-      setIssues(r.data);
+      if (run === validationRun.current) setIssues(r.data);
     } catch {
-      setIssues([]);
+      if (run === validationRun.current) setIssues([]);
     } finally {
-      setValidating(false);
+      if (run === validationRun.current) setValidating(false);
     }
   }
 
@@ -128,10 +133,20 @@ export function Workbench() {
   }
 
   // ---- 节点 3：选方向 → 生成方案表（占位） ----
-  async function onSelectDir(id: string) {
+  function onSelectDir(id: string) {
     setSelectedDir(id);
-    const direction = directions?.find((d) => d.id === id);
+  }
+
+  function updateDirection(id: string, field: "title" | "concept" | "format") {
+    return (value: string) => setDirections((current) => current?.map((direction) => direction.id === id ? { ...direction, [field]: value } : direction) ?? null);
+  }
+
+  async function onGeneratePlan() {
+    const direction = directions?.find((d) => d.id === selectedDir);
     if (!direction) return;
+    const loadingToast = toast.loading(t("stagemuse.plan.workingToast"), {
+      description: t("stagemuse.plan.workingToastDescription"),
+    });
     setLoading("plan");
     try {
       const r = await stageMuseApi.generatePlan(direction, requirement);
@@ -140,10 +155,12 @@ export function Workbench() {
       setCurrent("v1");
       setProposals(null);
       addVersion("v1", t("stagemuse.log.v1"));
-      toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"));
+      toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"), {
+        id: loadingToast,
+      });
       runValidate(r.data);
     } catch {
-      handleErr();
+      toast.error(t("stagemuse.toast.failed"), { id: loadingToast });
     } finally {
       setLoading(null);
     }
@@ -180,13 +197,13 @@ export function Workbench() {
     runValidate(next);
   }
 
-  function editCell(rowIdx: number, col: string, value: string) {
+  function editCell(rowIdx: number, col: EditableCueField, value: string) {
     const target = current === "v2" ? v2 : v1;
     if (!target) return;
-    const next = clone(target);
-    (next.rows[rowIdx] as unknown as Record<string, unknown>)[col] = value;
+    const next = updatePlanRow(target, rowIdx, col, value);
     if (current === "v2") setV2(next);
     else setV1(next);
+    runValidate(next);
   }
 
   const cellChanged = (base: PlanRow, row: PlanRow, col: string): boolean => {
@@ -265,20 +282,37 @@ export function Workbench() {
             </div>
             <div className="p-3 pb-1">
               {directions.map((d) => (
-                <button
+                <div
                   key={d.id}
                   className={`sm-dcard ${selectedDir === d.id ? "active" : ""}`}
-                  onClick={() => onSelectDir(d.id)}
                 >
-                  <h3>{d.title}</h3>
-                  <p>{d.concept}</p>
-                  <div className="sm-chips">
-                    <span className="sm-chip green">{d.format}</span>
-                    <span className="sm-chip">{d.arc}</span>
-                    <span className="sm-chip red">{t("stagemuse.dir.diff")}：{d.difficulty}</span>
-                  </div>
-                </button>
+                  {selectedDir === d.id ? (
+                    <>
+                      <h3>{d.title}</h3>
+                      <p className="mt-1 text-[11px] font-semibold" style={{ color: "var(--sm-green)" }} aria-live="polite">{t("stagemuse.dir.selectedHint")}</p>
+                      <input className="mt-2 w-full bg-transparent font-bold" value={d.format} onChange={(event) => updateDirection(d.id, "format")(event.target.value)} />
+                      <textarea className="sm-ta mt-2" value={d.concept} onChange={(event) => updateDirection(d.id, "concept")(event.target.value)} />
+                      <div className="sm-chips">
+                        <span className="sm-chip green">{d.format}</span>
+                        <span className="sm-chip">{d.arc}</span>
+                        <span className="sm-chip red">{t("stagemuse.dir.diff")}：{d.difficulty}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <button type="button" className="block w-full text-left" onClick={() => onSelectDir(d.id)} aria-pressed="false">
+                      <h3>{d.title}</h3>
+                      <p>{d.concept}</p>
+                      <div className="sm-chips">
+                        <span className="sm-chip green">{d.format}</span>
+                        <span className="sm-chip">{d.arc}</span>
+                        <span className="sm-chip red">{t("stagemuse.dir.diff")}：{d.difficulty}</span>
+                      </div>
+                    </button>
+                  )}
+                </div>
               ))}
+              {selectedDir && <button className="sm-solid w-full" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.dir.confirm")}</button>}
+              {loading === "plan" && <p className="mt-2 text-center text-[11px]" style={{ color: "var(--sm-muted)" }} role="status">{t("stagemuse.plan.workingInline")}</p>}
             </div>
           </section>
         )}
@@ -286,6 +320,7 @@ export function Workbench() {
 
       {/* ============ CENTER ============ */}
       <div className="grid content-start gap-2.5">
+        {activePlan && <CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} />}
         <section className="sm-panel">
           <div className="sm-phead">
             <div>
@@ -311,12 +346,18 @@ export function Workbench() {
           {!activePlan ? (
             <div className="sm-empty" style={{ minHeight: 380 }}>
               {loading === "plan" ? (
-                <>
-                  <div style={{ paddingTop: 40 }}>
+                <div className="mx-auto flex max-w-sm flex-col items-center px-6 text-center" role="status" aria-live="polite">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full" style={{ background: "var(--sm-yellow)" }}>
                     <span className="sm-spinner" />
                   </div>
-                  <div style={{ marginTop: 16 }}>{t("stagemuse.plan.loading")}</div>
-                </>
+                  <strong className="text-sm">{t("stagemuse.plan.workingTitle")}</strong>
+                  <p className="mt-2 text-xs leading-5" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.plan.workingDescription")}</p>
+                  <div className="mt-4 grid w-full grid-cols-3 gap-1.5 text-left text-[10px] font-semibold" style={{ color: "var(--sm-muted)" }}>
+                    <span className="rounded px-2 py-2" style={{ background: "var(--sm-paper)" }}>{t("stagemuse.plan.workingOutputTime")}</span>
+                    <span className="rounded px-2 py-2" style={{ background: "var(--sm-paper)" }}>{t("stagemuse.plan.workingOutputCue")}</span>
+                    <span className="rounded px-2 py-2" style={{ background: "var(--sm-paper)" }}>{t("stagemuse.plan.workingOutputDepartments")}</span>
+                  </div>
+                </div>
               ) : (
                 <>
                   <div className="big">🎬</div>
@@ -337,7 +378,7 @@ export function Workbench() {
                   </thead>
                   <tbody>
                     {activePlan.rows.map((row, ri) => (
-                      <tr key={ri}>
+                      <tr key={ri} className={selectedCueIndex === ri ? "bg-yellow-100" : ""} onClick={() => setSelectedCueIndex(ri)}>
                         {COLS.map((c) => {
                           const changed = diffOn && v1 ? cellChanged(v1.rows[ri], row, c) : false;
                           if (c === "time")
@@ -382,7 +423,7 @@ export function Workbench() {
                     {t("stagemuse.validate.clean")}
                   </p>
                 ) : (
-                  issues.map((iss, i) => <IssueItem key={i} issue={iss} />)
+                  issues.map((iss, i) => <IssueItem key={i} issue={iss} onSelectCue={setSelectedCueIndex} />)
                 )}
               </div>
             </>
@@ -471,7 +512,7 @@ export function Workbench() {
           </section>
         )}
 
-        {activePlan && <DepartmentRequirements plan={activePlan} />}
+        {activePlan && <DepartmentRequirements plan={activePlan} selectedCueIndex={selectedCueIndex} onSelectCue={setSelectedCueIndex} />}
       </div>
     </div>
   );
@@ -515,7 +556,7 @@ function RequirementGroup({ tone, label, items, onChange }: { tone: RequirementI
   );
 }
 
-function IssueItem({ issue }: { issue: ValidationIssue }) {
+function IssueItem({ issue, onSelectCue }: { issue: ValidationIssue; onSelectCue: (index: number) => void }) {
   const { t } = useTranslation();
   const sevClass = issue.severity === "error" ? "err" : issue.severity === "warning" ? "warn" : "info";
   const sevLabel =
@@ -527,7 +568,7 @@ function IssueItem({ issue }: { issue: ValidationIssue }) {
   const where = issue.rowIndex === -1 ? t("stagemuse.validate.overall") : t("stagemuse.validate.row", { n: issue.rowIndex + 1 });
   const src = issue.source === "rule" ? t("stagemuse.validate.rule") : t("stagemuse.validate.ai");
   return (
-    <div className="sm-issue">
+    <button type="button" className="sm-issue w-full text-left" onClick={() => issue.rowIndex >= 0 && onSelectCue(issue.rowIndex)}>
       <span className={`sm-sev ${sevClass}`}>{sevLabel}</span>
       <div>
         <p>{issue.message}</p>
@@ -536,16 +577,40 @@ function IssueItem({ issue }: { issue: ValidationIssue }) {
           {issue.suggestion ? `｜${t("stagemuse.validate.suggest")}：${issue.suggestion}` : ""}
         </small>
       </div>
-    </div>
+    </button>
   );
 }
 
-function DepartmentRequirements({ plan }: { plan: PlanSnapshot }) {
+const DEPARTMENT_FIELDS = ["music", "visual", "lighting", "performer", "props"] as const;
+
+function DepartmentRequirements({ plan, selectedCueIndex, onSelectCue }: { plan: PlanSnapshot; selectedCueIndex: number | null; onSelectCue: (index: number) => void }) {
   const { t } = useTranslation();
-  const requirements = plan.rows.flatMap((row, cueIndex) => [
-    ["music", row.music], ["visual", row.visual], ["lighting", row.lighting], ["performer", row.formationNote], ["props", row.props],
-  ].map(([department, content]) => ({ department, content, cueIndex, time: row.time }))).filter((item) => item.content && item.content !== "无");
-  return <section className="sm-panel"><div className="sm-phead"><h2>{t("stagemuse.department.title")}</h2><span className="sm-lab">AUTO EXTRACT</span></div><div className="p-3">{requirements.map((item) => <div className="sm-vitem" key={`${item.department}-${item.cueIndex}`}><b>{t(`stagemuse.department.${item.department}`)}</b> · Cue {item.cueIndex + 1} · {item.time}<small>{item.content}</small></div>)}</div></section>;
+  const [department, setDepartment] = useState<(typeof DEPARTMENT_FIELDS)[number]>("music");
+  const fieldFor = (row: PlanRow, key: (typeof DEPARTMENT_FIELDS)[number]) => key === "performer" ? row.formationNote : row[key];
+  const requirements = plan.rows.map((row, cueIndex) => ({ cueIndex, time: row.time, content: fieldFor(row, department) })).filter((item) => item.content && item.content !== "无");
+  return (
+    <section className="sm-panel">
+      <div className="sm-phead"><h2>{t("stagemuse.department.title")}</h2><span className="sm-lab">{t("stagemuse.department.autoExtract")}</span></div>
+      <div className="p-3">
+        <div className="flex flex-wrap gap-1.5" aria-label={t("stagemuse.department.switchLabel")}>
+          {DEPARTMENT_FIELDS.map((key) => (
+            <button key={key} type="button" onClick={() => setDepartment(key)} className={`sm-chip ${department === key ? "red" : ""}`}>
+              {t(`stagemuse.department.${key}`)} · {plan.rows.filter((row) => fieldFor(row, key) && fieldFor(row, key) !== "无").length}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px]" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.department.hint")}</p>
+        <div className="mt-2 space-y-2">
+          {requirements.map((item) => (
+            <button key={item.cueIndex} type="button" onClick={() => onSelectCue(item.cueIndex)} className={`block w-full rounded-xl border-2 p-3 text-left ${selectedCueIndex === item.cueIndex ? "border-[var(--sm-red)] bg-[var(--sm-cream)]" : "border-[var(--sm-line)] bg-[#fffbee]"}`}>
+              <div className="flex items-center justify-between gap-2"><b className="text-xs">{t("stagemuse.department.cue", { n: item.cueIndex + 1 })}</b><span className="sm-lab">{item.time}</span></div>
+              <p className="mt-1 text-[11px] leading-5" style={{ color: "var(--sm-muted)" }}>{item.content}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 // 按 Agent 返回的字段级修改指令应用到方案表（对任意反馈通用）

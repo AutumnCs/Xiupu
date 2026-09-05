@@ -4,6 +4,8 @@ import { orchestrator } from "@/lib/agents/orchestrator";
 import { AppAIUnavailableError, isProviderConfigured } from "@/lib/ai/provider";
 import type { CreativeDirection, StructuredRequirement } from "@/lib/agents/types";
 
+export const maxDuration = 60;
+
 /** POST /api/agents/plan — 多专业方案生成 Agent */
 export async function POST(request: NextRequest) {
   const guest = requireGuest(request);

@@ -104,6 +104,8 @@
     "dir": {
       "title": "Creative Directions",
       "hint": "Pick one direction",
+      "selectedHint": "Selected. Refine it first, then build the execution plan.",
+      "confirm": "Confirm direction and generate Cue sheet",
       "diff": "Difficulty"
     },
     "plan": {
@@ -111,7 +113,15 @@
       "empty": "Pick a creative direction and the time-based proposal table will appear here.",
       "note": "Click any cell to edit; the formation column is a schematic.",
       "estimate": "est.",
-      "loading": "Building plan…"
+      "loading": "Building Cue sheet…",
+      "workingToast": "Turning the creative direction into an execution plan",
+      "workingToastDescription": "The Cue sheet will appear in the centre of the workbench when it is ready.",
+      "workingInline": "Building the first plan. You can still review or refine the selected direction.",
+      "workingTitle": "Building the first Cue sheet",
+      "workingDescription": "Turning the direction into executable time blocks, stage notes, and departmental collaboration details. It will unfold here when ready.",
+      "workingOutputTime": "Time blocks",
+      "workingOutputCue": "Cue sheet",
+      "workingOutputDepartments": "Departments"
     },
     "col": {
       "time": "Timecode",
@@ -139,7 +149,30 @@
     "status": {
       "title": "Version Log"
     },
-    "department": { "title": "Department Requirements", "music": "Music", "visual": "Visual", "lighting": "Lighting", "performer": "Cast / Blocking", "props": "Props" },
+    "department": {
+      "title": "Department Requirements",
+      "autoExtract": "BY DEPARTMENT",
+      "switchLabel": "Switch department",
+      "hint": "Choose a department to review its work by Cue. Select an item to focus that Cue.",
+      "cue": "Cue {{n}}",
+      "music": "Music",
+      "visual": "Visual",
+      "lighting": "Lighting",
+      "performer": "Cast / Blocking",
+      "props": "Props"
+    },
+    "timeline": {
+      "title": "Cue Timeline",
+      "cueCount": "{{count}} cues",
+      "cue": "Cue {{n}}",
+      "hint": "Choose a Cue to review its execution focus. Edit the timecode here; edit other details in the proposal table below.",
+      "noMusic": "No music entered",
+      "timeLabel": "Timecode",
+      "music": "Music / segment",
+      "formation": "Cast / Blocking",
+      "visual": "Visual",
+      "lighting": "Lighting"
+    },
     "log": {
       "v1": "Initial plan generated",
       "v2": "Linked changes applied"
