@@ -8,9 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sdk:sync": "rm -rf node_modules/@eazo/sdk && mkdir -p node_modules/@eazo/sdk && cp ../eazo-sdk/sdk/package.json node_modules/@eazo/sdk/ && cp -r ../eazo-sdk/sdk/dist node_modules/@eazo/sdk/dist && cp -R ../eazo-sdk/sdk/node_modules node_modules/@eazo/sdk/node_modules",
-    "sdk:dev": "(cd ../eazo-sdk/sdk && npm run build) && bun run sdk:sync",
-    "sdk:watch": "bun run scripts/sdk-watch.ts",
+    "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/lib/db/migrate.ts",
     "db:push": "drizzle-kit push",
@@ -19,7 +17,6 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
-    "@eazo/sdk": "0.22.8",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -34,6 +31,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-i18next": "^16.5.6",
+    "server-only": "^0.0.1",
     "shadcn": "^4.3.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
@@ -50,6 +48,7 @@
     "eslint-config-next": "16.2.4",
     "happy-dom": "^20.11.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   }
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { appAi } from "@/lib/eazo-ai-billing";
+import { appAi } from "@/lib/ai/provider";
 
 /**
  * 所有 Agent 共用的结构化 JSON 生成工具。

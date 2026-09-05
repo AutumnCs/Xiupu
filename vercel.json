@@ -11,11 +11,5 @@
                 }
             ]
         }
-    ],
-    "crons": [
-        {
-            "path": "/api/notifications/cron/daily-digest",
-            "schedule": "0 17 * * *"
-        }
     ]
 }

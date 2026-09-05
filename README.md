@@ -1,48 +1,24 @@
-A minimal Next.js starter for building apps inside the [Eazo](https://eazo.ai) platform. Includes a working example of the Eazo session token flow: the app requests the encrypted user token from the host via `postMessage`, sends it to a Next.js API route, decrypts it server-side with `@eazo/node-sdk`, and returns the user profile.
+# 秀谱 XiuPu
 
-## Getting Started
+秀演创作工作台。本地体验版提供需求解析、创意方向、方案 cue 表、反馈改稿和版本对比。
 
-Install dependencies with Bun:
+## 本地运行
 
 ```bash
 bun install
+Copy-Item .env.example .env
+bun run dev
 ```
 
-If dependency installation stalls on this machine during `sharp` setup, use:
+在 `.env` 中填入任意 OpenAI 兼容服务的 `AI_PROVIDER_BASE_URL`、`AI_PROVIDER_API_KEY` 和 `AI_PROVIDER_MODEL`，然后打开 [http://localhost:3000](http://localhost:3000)。密钥只在服务端 API 路由中使用。
+
+本阶段采用本地 HTTP-only 访客 Cookie，不需要注册或数据库。Supabase 的认证、项目持久化和文件存储将在下一阶段引入。
+
+## 验证与部署
 
 ```bash
-SHARP_IGNORE_GLOBAL_LIBVIPS=1 bun install
+bun run lint
+bun run build
 ```
 
-Then start the development server:
-
-```bash
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and fill in your private key:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Description |
-|---|---|
-| `EAZO_PRIVATE_KEY` | Your Eazo developer private key (hex, 64 chars). Used server-side to decrypt the user session token. |
-
-You can generate a keypair in the Eazo developer settings. Never expose the private key to the browser.
-
-## Learn More
-
-- [Eazo Documentation](https://docs.eazo.ai)
-- [Next.js Documentation](https://nextjs.org/docs)
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+可部署到任意支持 Next.js 的主机；部署环境同样配置上述三个 AI 环境变量。

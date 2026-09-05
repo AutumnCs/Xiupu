@@ -10,7 +10,8 @@
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
-    "userId": "User ID"
+    "userId": "User ID",
+    "guestMode": "Guest mode"
   },
   "language": {
     "label": "Language",

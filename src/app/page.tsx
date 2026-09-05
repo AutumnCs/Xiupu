@@ -12,7 +12,7 @@ export default function Home() {
       <div className="sm-stage-bg" aria-hidden />
       <div
         className="relative px-3 pt-3"
-        style={{ paddingTop: "max(12px, env(safe-area-inset-top,0px))", paddingBottom: "var(--eazo-safe-area-bottom)" }}
+        style={{ paddingTop: "max(12px, env(safe-area-inset-top,0px))", paddingBottom: "max(12px, env(safe-area-inset-bottom,0px))" }}
       >
         <header className="mx-auto mb-3 grid max-w-[1460px] grid-cols-1 gap-2.5 lg:grid-cols-[auto_1fr_auto]">
           <section className="sm-tile flex items-center gap-3 px-4 py-2.5" style={{ background: "var(--sm-green)", color: "var(--sm-paper2)" }}>

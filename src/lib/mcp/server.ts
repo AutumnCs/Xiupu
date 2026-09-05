@@ -4,7 +4,7 @@ export function buildMcpServer(userId: string): McpServer {
   void userId;
 
   const server = new McpServer({
-    name: "eazo-mcp",
+    name: "xiupu-mcp",
     version: "1.0.0",
   });
 

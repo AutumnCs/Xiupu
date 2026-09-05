@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { auth } from "@eazo/sdk";
-import { stageMuseApi, AuthRequiredError } from "@/lib/api/stagemuse";
+import { stageMuseApi } from "@/lib/api/stagemuse";
 import { FormationSvg } from "./formation-svg";
 import type {
   StructuredRequirement,
@@ -51,13 +50,7 @@ export function Workbench() {
   const addVersion = (ver: string, summary: string) =>
     setVersions((v) => [{ ver, summary, time: nowTime() }, ...v]);
 
-  /** 统一错误处理：未登录时引导登录，否则通用提示 */
-  function handleErr(err: unknown) {
-    if (err instanceof AuthRequiredError) {
-      toast.error(t("stagemuse.toast.needLogin"));
-      auth.login().catch(() => undefined);
-      return;
-    }
+  function handleErr() {
     toast.error(t("stagemuse.toast.failed"));
   }
 
@@ -85,8 +78,8 @@ export function Workbench() {
       setRequirement(r.data);
       setReqFallback(!!r.fallback);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.reqDone"));
-    } catch (err) {
-      handleErr(err);
+    } catch {
+      handleErr();
     } finally {
       setLoading(null);
     }
@@ -100,8 +93,8 @@ export function Workbench() {
       const r = await stageMuseApi.generateDirections(requirement);
       setDirections(r.data);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirDone"));
-    } catch (err) {
-      handleErr(err);
+    } catch {
+      handleErr();
     } finally {
       setLoading(null);
     }
@@ -122,8 +115,8 @@ export function Workbench() {
       addVersion("v1", t("stagemuse.log.v1"));
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"));
       runValidate(r.data);
-    } catch (err) {
-      handleErr(err);
+    } catch {
+      handleErr();
     } finally {
       setLoading(null);
     }
@@ -139,8 +132,8 @@ export function Workbench() {
       setProposals(r.data);
       setChecked(Object.fromEntries(r.data.map((p) => [p.id, true])));
       if (r.fallback) toast.message(t("stagemuse.toast.aiFallback"));
-    } catch (err) {
-      handleErr(err);
+    } catch {
+      handleErr();
     } finally {
       setLoading(null);
     }
