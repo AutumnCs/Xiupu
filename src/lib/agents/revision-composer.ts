@@ -1,6 +1,7 @@
 import "server-only";
 
 import { runAgentJSON } from "./run-agent";
+import { applyCueDurationDelta } from "@/lib/project-state/linked-revision";
 import type { AgentResult, ImpactItem, PerformanceDraft, PlanSnapshot, RevisionSnapshot } from "./types";
 
 const SYSTEM = `你是秀导方案修订助手。根据导演反馈和已经确认的影响项，重建完整单节目演绎形式与完整 Cue 表，只输出 JSON。
@@ -15,5 +16,8 @@ export async function composeRevision(input: { feedback: string; performance: Pe
     params: { max_tokens: 2800, temperature: 0.45 },
   });
   if (!data?.performance?.sections?.length || !data?.plan?.rows?.length) throw new Error("修订结果不完整");
-  return { ok: true, agent: "revision-composer", data, raw };
+  const durationMatch = input.feedback.match(/(?:延长|增加|加长)\s*(\d+)\s*秒/);
+  const cueId = input.impacts.flatMap((impact) => impact.cueIds)[0];
+  const linkedPlan = durationMatch && cueId ? applyCueDurationDelta(data.plan, cueId, Number(durationMatch[1])) : data.plan;
+  return { ok: true, agent: "revision-composer", data: { ...data, plan: linkedPlan }, raw };
 }

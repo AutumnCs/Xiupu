@@ -132,6 +132,7 @@ export function Workbench() {
       setProjectId(saved.id);
       setShareToken(saved.shareToken);
       setShareUrl(saved.shareUrl);
+      addVersion(`v${saved.version}`, t("stagemuse.persistence.versionSaved"));
       toast.success(t("stagemuse.persistence.saved"));
     } catch {
       toast.error(t("stagemuse.persistence.unavailable"));

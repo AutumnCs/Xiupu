@@ -32,7 +32,15 @@ export async function POST(request: NextRequest) {
       console.error("[api/projects] Supabase write failed", response.status, await response.text());
       return jsonWithGuest({ ok: false, error: "project_save_failed" }, guest, { status: 502 });
     }
-    return jsonWithGuest({ ok: true, id, shareToken: payload.share_token, shareUrl: `${new URL(request.url).origin}/?share=${payload.share_token}` }, guest);
+    const latest = await fetch(`${config.url}/rest/v1/project_versions?select=version&project_id=eq.${encodeURIComponent(id)}&order=version.desc&limit=1`, { headers: headers(config.key), cache: "no-store" });
+    const latestRows = latest.ok ? await latest.json() as Array<{ version: number }> : [];
+    const version = (latestRows[0]?.version ?? 0) + 1;
+    const versionResponse = await fetch(`${config.url}/rest/v1/project_versions`, { method: "POST", headers: headers(config.key), body: JSON.stringify({ project_id: id, version, snapshot: body.snapshot, summary: String(body.summary || "工作台保存") }), cache: "no-store" });
+    if (!versionResponse.ok) {
+      console.error("[api/projects] version write failed", versionResponse.status, await versionResponse.text());
+      return jsonWithGuest({ ok: false, error: "version_save_failed" }, guest, { status: 502 });
+    }
+    return jsonWithGuest({ ok: true, id, version, shareToken: payload.share_token, shareUrl: `${new URL(request.url).origin}/?share=${payload.share_token}` }, guest);
   } catch (error) {
     console.error("[api/projects]", error);
     return jsonWithGuest({ ok: false, error: "invalid_body" }, guest, { status: 400 });
@@ -44,7 +52,19 @@ export async function GET(request: NextRequest) {
   const config = getSupabaseConfig();
   if (!config.url || !config.key) return jsonWithGuest({ ok: false, error: "persistence_not_configured" }, guest, { status: 503 });
   const share = new URL(request.url).searchParams.get("share");
-  if (!share) return jsonWithGuest({ ok: false, error: "missing_share" }, guest, { status: 400 });
+  const projectId = new URL(request.url).searchParams.get("projectId");
+  if (!share && projectId) {
+    const ownership = await fetch(`${config.url}/rest/v1/projects?select=id,title,updated_at&id=eq.${encodeURIComponent(projectId)}&owner_guest_id=eq.${encodeURIComponent(guest.guestId)}&limit=1`, { headers: headers(config.key), cache: "no-store" });
+    if (!ownership.ok || !(await ownership.json()).length) return jsonWithGuest({ ok: false, error: "project_not_owned" }, guest, { status: 403 });
+    const versions = await fetch(`${config.url}/rest/v1/project_versions?select=id,version,summary,created_at&project_id=eq.${encodeURIComponent(projectId)}&order=version.desc`, { headers: headers(config.key), cache: "no-store" });
+    if (!versions.ok) return jsonWithGuest({ ok: false, error: "version_load_failed" }, guest, { status: 502 });
+    return jsonWithGuest({ ok: true, versions: await versions.json() }, guest);
+  }
+  if (!share) {
+    const response = await fetch(`${config.url}/rest/v1/projects?select=id,title,share_token,updated_at&owner_guest_id=eq.${encodeURIComponent(guest.guestId)}&order=updated_at.desc`, { headers: headers(config.key), cache: "no-store" });
+    if (!response.ok) return jsonWithGuest({ ok: false, error: "project_list_failed" }, guest, { status: 502 });
+    return jsonWithGuest({ ok: true, projects: await response.json() }, guest);
+  }
   const response = await fetch(`${config.url}/rest/v1/projects?select=id,title,snapshot,updated_at&share_token=eq.${encodeURIComponent(share)}&limit=1`, { headers: headers(config.key), cache: "no-store" });
   if (!response.ok) return jsonWithGuest({ ok: false, error: "project_load_failed" }, guest, { status: 502 });
   const rows = await response.json() as Array<{ id: string; title: string; snapshot: unknown; updated_at: string }>;

@@ -14,3 +14,18 @@ create index if not exists projects_share_token_idx on public.projects (share_to
 alter table public.projects enable row level security;
 revoke all on public.projects from anon, authenticated;
 grant all on public.projects to service_role;
+
+create table if not exists public.project_versions (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  version integer not null,
+  snapshot jsonb not null,
+  summary text not null default '工作台保存',
+  created_at timestamptz not null default now(),
+  unique (project_id, version)
+);
+
+create index if not exists project_versions_project_id_idx on public.project_versions (project_id, version desc);
+alter table public.project_versions enable row level security;
+revoke all on public.project_versions from anon, authenticated;
+grant all on public.project_versions to service_role;

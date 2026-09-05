@@ -19,5 +19,5 @@ export async function saveProject(snapshot: ProjectSnapshot, projectId?: string,
     body: JSON.stringify({ id: projectId, shareToken, snapshot }),
   });
   if (!response.ok) throw new Error("project_save_failed");
-  return (await response.json()) as { ok: true; id: string; shareToken: string; shareUrl: string };
+  return (await response.json()) as { ok: true; id: string; version: number; shareToken: string; shareUrl: string };
 }
