@@ -34,6 +34,8 @@ export interface PlanRow {
   visual: string;
   lighting: string;
   props: string;
+  camera?: string;
+  notes?: string;
 }
 
 export interface PlanSnapshot {

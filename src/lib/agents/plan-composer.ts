@@ -6,7 +6,7 @@ import type { AgentResult, PlanSnapshot, PlanRow, CreativeDirection, StructuredR
 /**
  * 多专业方案生成 Agent（节目拆解 + 逐段专业内容）
  * 职责：把选定创意方向拆成一个聚焦片段（30–60秒、5–8行），
- * 每行生成 7 列专业内容：时间码/音乐/台词/人员队形/视觉/灯光/道具。
+ * 每行生成可执行 Cue：时间码、音乐、台词、调度、视觉、灯光、道具、镜头和备注。
  * 确定性规则：人数为正整数、时间段连续。语义交给模型。
  */
 
@@ -17,8 +17,8 @@ const SYSTEM = `你是资深秀导，负责把创意方向拆解为可执行的�
 - 每个时间段（行）包含 7 个字段：
   time(时间码，如"2:00–2:12")/music(音乐或段落)/speech(歌词或台词，无则写"（无台词）")/
   people(该段人数，正整数)/lead(该段是否有领舞居中亮相，布尔)/formationNote(队形一句话描述)/
-  visual(主屏视觉)/lighting(灯光)/props(道具)。
-输出 JSON 严格为：{"segmentLabel":string,"rows":[{"time":string,"music":string,"speech":string,"people":number,"lead":boolean,"formationNote":string,"visual":string,"lighting":string,"props":string}]}。
+  visual(主屏视觉)/lighting(灯光)/props(道具)/camera(镜头)/notes(待确认或执行备注)。
+输出 JSON 严格为：{"segmentLabel":string,"rows":[{"time":string,"music":string,"speech":string,"people":number,"lead":boolean,"formationNote":string,"visual":string,"lighting":string,"props":string,"camera":string,"notes":string}]}。
 segmentLabel 描述所选片段，如"选定片段：高潮·爆发段（120s–180s）"。使用简体中文。`;
 
 /** 确定性校验：修正非正整数人数、保证行结构完整 */
@@ -35,6 +35,8 @@ function sanitize(rows: PlanRow[]): PlanRow[] {
       visual: String(r.visual ?? ""),
       lighting: String(r.lighting ?? ""),
       props: String(r.props ?? ""),
+      camera: String(r.camera ?? ""),
+      notes: String(r.notes ?? ""),
     }));
 }
 

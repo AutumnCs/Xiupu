@@ -20,7 +20,7 @@ import type {
 const CASE_BRIEF =
   "3分钟科技品牌开场秀，主题「从个体到共生」；12名舞者（含1名领舞）；主LED屏，左右两个出入口；情绪从克制到连接再到爆发；结尾需体现品牌力量感。";
 const FEEDBACK_EXAMPLE = "人数改成8人；最后30秒更有力量感；不使用手持道具。";
-const COLS = ["time", "music", "speech", "formation", "visual", "lighting", "props"] as const;
+const COLS = ["time", "music", "speech", "formation", "visual", "lighting", "props", "camera", "notes"] as const;
 
 const clone = <T,>(o: T): T => JSON.parse(JSON.stringify(o));
 
@@ -31,6 +31,7 @@ export function Workbench() {
 
   const [brief, setBrief] = useState("");
   const [projectMaterials, setProjectMaterials] = useState("");
+  const [directorCreative, setDirectorCreative] = useState("");
   const [requirement, setRequirement] = useState<StructuredRequirement | null>(null);
   const [requirementItems, setRequirementItems] = useState<RequirementItem[]>([]);
   const [reqFallback, setReqFallback] = useState(false);
@@ -50,9 +51,17 @@ export function Workbench() {
   const [loading, setLoading] = useState<string | null>(null);
 
   async function onMaterialFiles(files: FileList | null) {
-    const selected = Array.from(files ?? []).filter((file) => isTextMaterial(file.name));
-    if (!selected.length) return toast.error(t("stagemuse.req.textFilesOnly"));
-    const content = await Promise.all(selected.map(async (file) => `【${file.name}】\n${await file.text()}`));
+    const selected = Array.from(files ?? []);
+    if (!selected.length) return;
+    const content = await Promise.all(selected.map(async (file) => {
+      if (isTextMaterial(file.name)) return `【${file.name}】\n${await file.text()}`;
+      if (!/\.(docx|pdf)$/i.test(file.name)) throw new Error("unsupported");
+      const body = new FormData(); body.set("file", file);
+      const response = await fetch("/api/materials/extract", { method: "POST", body });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error("extract_failed");
+      return `【${result.name}】\n${result.text}`;
+    }));
     setProjectMaterials((current) => [current, ...content].filter(Boolean).join("\n\n"));
   }
 
@@ -85,7 +94,11 @@ export function Workbench() {
     if (!brief.trim()) return toast.error(t("stagemuse.toast.needInput"));
     setLoading("parse");
     try {
-      const r = await stageMuseApi.parseRequirement([brief.trim(), projectMaterials.trim()].filter(Boolean).join("\n\n项目补充资料：\n"));
+      const r = await stageMuseApi.parseRequirement([
+        brief.trim(),
+        projectMaterials.trim() && `项目补充资料：\n${projectMaterials.trim()}`,
+        directorCreative.trim() && `秀导创意：\n${directorCreative.trim()}`,
+      ].filter(Boolean).join("\n\n"));
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
       setReqFallback(!!r.fallback);
@@ -202,9 +215,15 @@ export function Workbench() {
                 onChange={(e) => setBrief(e.target.value)}
                 placeholder={t("stagemuse.req.placeholder")}
               />
+              <textarea
+                className="sm-ta mt-2"
+                value={directorCreative}
+                onChange={(e) => setDirectorCreative(e.target.value)}
+                placeholder={t("stagemuse.req.creativePlaceholder")}
+              />
               <label className="sm-ghost mt-2 inline-flex cursor-pointer items-center">
                 {t("stagemuse.req.importText")}
-                <input className="sr-only" type="file" accept=".txt,.md,text/plain,text/markdown" multiple onChange={(event) => void onMaterialFiles(event.target.files)} />
+                <input className="sr-only" type="file" accept=".txt,.md,.docx,.pdf,text/plain,text/markdown,application/pdf" multiple onChange={(event) => void onMaterialFiles(event.target.files)} />
               </label>
               <textarea
                 className="sm-ta mt-2"
@@ -451,6 +470,8 @@ export function Workbench() {
             </div>
           </section>
         )}
+
+        {activePlan && <DepartmentRequirements plan={activePlan} />}
       </div>
     </div>
   );
@@ -517,6 +538,14 @@ function IssueItem({ issue }: { issue: ValidationIssue }) {
       </div>
     </div>
   );
+}
+
+function DepartmentRequirements({ plan }: { plan: PlanSnapshot }) {
+  const { t } = useTranslation();
+  const requirements = plan.rows.flatMap((row, cueIndex) => [
+    ["music", row.music], ["visual", row.visual], ["lighting", row.lighting], ["performer", row.formationNote], ["props", row.props],
+  ].map(([department, content]) => ({ department, content, cueIndex, time: row.time }))).filter((item) => item.content && item.content !== "无");
+  return <section className="sm-panel"><div className="sm-phead"><h2>{t("stagemuse.department.title")}</h2><span className="sm-lab">AUTO EXTRACT</span></div><div className="p-3">{requirements.map((item) => <div className="sm-vitem" key={`${item.department}-${item.cueIndex}`}><b>{t(`stagemuse.department.${item.department}`)}</b> · Cue {item.cueIndex + 1} · {item.time}<small>{item.content}</small></div>)}</div></section>;
 }
 
 // 按 Agent 返回的字段级修改指令应用到方案表（对任意反馈通用）

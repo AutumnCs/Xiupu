@@ -86,6 +86,7 @@
       "empty": "Paste the show brief, or click \"Load demo case\" to start.",
       "placeholder": "e.g. 3-min tech brand opening show, theme \"From Individual to Symbiosis\", 12 dancers, main LED, two side entries, emotion from restraint to burst…",
       "materialsPlaceholder": "Supporting materials: client requirements, run sheet, cast details, stage constraints, or references.",
+      "creativePlaceholder": "My creative direction: emotional arc, visual taste, key moments, or transitions.",
       "importText": "Import TXT / Markdown",
       "textFilesOnly": "Only TXT and Markdown files are supported for now.",
       "parse": "Parse requirements",
@@ -120,6 +121,8 @@
       "visual": "Visual",
       "lighting": "Lighting",
       "props": "Props"
+      ,"camera": "Camera"
+      ,"notes": "Notes"
     },
     "fb": {
       "title": "Director Feedback",
@@ -136,6 +139,7 @@
     "status": {
       "title": "Version Log"
     },
+    "department": { "title": "Department Requirements", "music": "Music", "visual": "Visual", "lighting": "Lighting", "performer": "Cast / Blocking", "props": "Props" },
     "log": {
       "v1": "Initial plan generated",
       "v2": "Linked changes applied"
