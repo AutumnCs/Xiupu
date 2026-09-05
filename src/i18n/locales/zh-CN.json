@@ -90,6 +90,10 @@
       "fixed": "已确定",
       "creative": "可创作",
       "pending": "待确认",
+      "lock": "锁定",
+      "unlock": "解锁",
+      "remove": "删除",
+      "add": "添加条目",
       "genDir": "生成创意方向",
       "generating": "生成中…"
     },

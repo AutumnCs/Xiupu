@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { stageMuseApi } from "@/lib/api/stagemuse";
 import { FormationSvg } from "./formation-svg";
+import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -29,6 +30,7 @@ export function Workbench() {
 
   const [brief, setBrief] = useState("");
   const [requirement, setRequirement] = useState<StructuredRequirement | null>(null);
+  const [requirementItems, setRequirementItems] = useState<RequirementItem[]>([]);
   const [reqFallback, setReqFallback] = useState(false);
   const [directions, setDirections] = useState<CreativeDirection[] | null>(null);
   const [selectedDir, setSelectedDir] = useState<string | null>(null);
@@ -76,6 +78,7 @@ export function Workbench() {
     try {
       const r = await stageMuseApi.parseRequirement(brief);
       setRequirement(r.data);
+      setRequirementItems(toRequirementItems(r.data));
       setReqFallback(!!r.fallback);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.reqDone"));
     } catch {
@@ -88,9 +91,11 @@ export function Workbench() {
   // ---- 节点 2：生成创意方向 ----
   async function onGenDir() {
     if (!requirement) return;
+    const editedRequirement = toStructuredRequirement(requirementItems);
+    setRequirement(editedRequirement);
     setLoading("dir");
     try {
-      const r = await stageMuseApi.generateDirections(requirement);
+      const r = await stageMuseApi.generateDirections(editedRequirement);
       setDirections(r.data);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirDone"));
     } catch {
@@ -204,9 +209,9 @@ export function Workbench() {
                   <span className="sm-chip red">{t("stagemuse.ai.fallback")}</span>
                 </div>
               )}
-              <ReqGroup tone="fx" label={t("stagemuse.req.fixed")} items={requirement.fixed} />
-              <ReqGroup tone="cr" label={t("stagemuse.req.creative")} items={requirement.creative} />
-              <ReqGroup tone="pd" label={t("stagemuse.req.pending")} items={requirement.pending} />
+              <RequirementGroup tone="fixed" label={t("stagemuse.req.fixed")} items={requirementItems} onChange={setRequirementItems} />
+              <RequirementGroup tone="creative" label={t("stagemuse.req.creative")} items={requirementItems} onChange={setRequirementItems} />
+              <RequirementGroup tone="pending" label={t("stagemuse.req.pending")} items={requirementItems} onChange={setRequirementItems} />
               <button className="sm-solid w-full" onClick={onGenDir} disabled={loading === "dir"}>
                 {loading === "dir" ? t("stagemuse.req.generating") : t("stagemuse.req.genDir")}
               </button>
@@ -432,18 +437,40 @@ export function Workbench() {
   );
 }
 
-function ReqGroup({ tone, label, items }: { tone: "fx" | "cr" | "pd"; label: string; items: string[] }) {
+function toRequirementItems(requirement: StructuredRequirement): RequirementItem[] {
+  return (Object.entries(requirement) as Array<[RequirementItem["tone"], string[]]>).flatMap(([tone, items]) =>
+    items.map((text) => createRequirementItem(tone, text)),
+  );
+}
+
+function toStructuredRequirement(items: RequirementItem[]): StructuredRequirement {
+  return {
+    fixed: items.filter((item) => item.tone === "fixed").map((item) => item.text),
+    creative: items.filter((item) => item.tone === "creative").map((item) => item.text),
+    pending: items.filter((item) => item.tone === "pending").map((item) => item.text),
+  };
+}
+
+function RequirementGroup({ tone, label, items, onChange }: { tone: RequirementItem["tone"]; label: string; items: RequirementItem[]; onChange: (items: RequirementItem[]) => void }) {
+  const { t } = useTranslation();
+  const toneClass = tone === "fixed" ? "fx" : tone === "creative" ? "cr" : "pd";
+  const groupItems = items.filter((item) => item.tone === tone);
   return (
     <div className="sm-rg">
       <div className="sm-rg-t">
-        <span className={`sm-dot ${tone}`} />
+        <span className={`sm-dot ${toneClass}`} />
         {label}
       </div>
       <ul>
-        {items.map((x, i) => (
-          <li key={i}>{x}</li>
+        {groupItems.map((item) => (
+          <li key={item.id} className="flex gap-1">
+            <input className="min-w-0 flex-1 bg-transparent" value={item.text} onChange={(event) => onChange(items.map((current) => current.id === item.id ? { ...current, text: event.target.value } : current))} />
+            <button type="button" className="sm-ghost px-2 py-0 text-[10px]" onClick={() => onChange(items.map((current) => current.id === item.id ? toggleRequirementLock(current) : current))}>{item.locked ? t("stagemuse.req.unlock") : t("stagemuse.req.lock")}</button>
+            <button type="button" className="sm-ghost px-2 py-0 text-[10px]" onClick={() => onChange(items.filter((current) => current.id !== item.id))}>{t("stagemuse.req.remove")}</button>
+          </li>
         ))}
       </ul>
+      <button type="button" className="mx-2 mb-2 text-[11px] underline" onClick={() => onChange([...items, createRequirementItem(tone, "")])}>{t("stagemuse.req.add")}</button>
     </div>
   );
 }

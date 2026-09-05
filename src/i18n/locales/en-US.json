@@ -90,6 +90,10 @@
       "fixed": "Confirmed",
       "creative": "Open to create",
       "pending": "To confirm",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "remove": "Remove",
+      "add": "Add item",
       "genDir": "Generate directions",
       "generating": "Generating…"
     },
