@@ -2,7 +2,8 @@ import type {
   StructuredRequirement,
   CreativeDirection,
   PlanSnapshot,
-  ChangeProposal,
+  PerformanceDraft,
+  ImpactReport,
 } from "./types";
 
 /**
@@ -34,23 +35,34 @@ export const FALLBACK_DIRECTIONS: CreativeDirection[] = [
   { id: "d3", title: "光之脉络", concept: "以光带串联舞者走位，形成不断生长的神经网络意象。", format: "线性走位 + 光带追踪", arc: "单点 → 连线 → 全场脉动", keyMoments: "0:50 连线成型 / 2:35 全网点亮", difficulty: "低" },
 ];
 
-/** 方案表（多专业内容 Agent 尚未接入，暂用预置片段：爆发段 120–180s） */
-export const FALLBACK_PLAN: PlanSnapshot = {
-  segmentLabel: "选定片段：高潮·爆发段（120s–180s）",
-  columns: ["time", "music", "speech", "formation", "visual", "lighting", "props"],
-  rows: [
-    { time: "2:00–2:12", music: "低频脉冲进入，节拍 90BPM", speech: "（无台词）", people: 12, lead: true, formationNote: "12人散点，领舞居中", visual: "主屏：粒子微光缓慢漂浮", lighting: "冷蓝顶光，低亮度", props: "手持发光棒（每人1支）" },
-    { time: "2:12–2:28", music: "鼓点叠加，能量渐强", speech: "旁白：「个体，从未孤单。」", people: 12, lead: true, formationNote: "向心聚拢成圆", visual: "主屏：粒子向中心汇聚", lighting: "蓝转青，亮度上升", props: "手持发光棒挥动" },
-    { time: "2:28–2:44", music: "副歌前奏，弦乐铺垫", speech: "（无台词）", people: 12, lead: false, formationNote: "两列纵队交错推进", visual: "主屏：数据流汇成光柱", lighting: "青光扫射 + 频闪", props: "手持发光棒举高" },
-    { time: "2:44–3:00", music: "全奏爆发 + 品牌音效落点", speech: "旁白：「共生，方能抵达。」", people: 12, lead: true, formationNote: "全体聚合 V 字，领舞居中亮相", visual: "主屏：全屏品牌 LOGO 点亮", lighting: "暖金全场 + 追光领舞", props: "手持发光棒同步熄灭定格" },
+export const FALLBACK_PERFORMANCE: PerformanceDraft = {
+  title: "从个体到共生",
+  theme: "让离散的个体在光与动作中逐步连接，最终形成集体能量。",
+  overview: "以克制开场、连接发展、群体爆发收束，主 LED 始终服务舞者关系变化。",
+  sections: [
+    { id: "s1", label: "开场 · 个体苏醒", durationLabel: "约30秒", staging: "舞者分散静置，领舞以单点动作唤醒空间。", blocking: "左右入口分批进入，保持疏离距离。", visual: "微光粒子缓慢漂浮", lighting: "冷蓝低亮度顶光" },
+    { id: "s2", label: "发展 · 关系建立", durationLabel: "约45秒", staging: "舞者以镜像、呼应动作建立连接。", blocking: "两组由两侧向中心交换推进。", visual: "粒子连线形成光路", lighting: "蓝青渐亮，侧光勾轮廓" },
+    { id: "s3", label: "转场 · 能量汇聚", durationLabel: "约30秒", staging: "动作由个体节拍转为共同脉冲。", blocking: "队列穿插后形成中心通道。", visual: "数据流向中心收束", lighting: "扫光与低频脉冲同步" },
+    { id: "s4", label: "高潮 · 群体共振", durationLabel: "约45秒", staging: "全体在同一节拍完成能量爆发。", blocking: "V字聚合，领舞居中。", visual: "全屏光网向外扩张", lighting: "暖金全场与追光" },
+    { id: "s5", label: "结尾 · 品牌落点", durationLabel: "约30秒", staging: "群体定格，为品牌信息留出清晰落点。", blocking: "全体面向观众，中心留展示区。", visual: "品牌标识在光网中点亮", lighting: "暖金收束，保持可见度" },
   ],
 };
 
-export const FEEDBACK_EXAMPLE = "人数改成8人；最后30秒更有力量感；不使用手持道具。";
+/** 单节目完整 Cue 的服务不可用兜底数据。 */
+export const FALLBACK_PLAN: PlanSnapshot = {
+  segmentLabel: "完整节目 Cue · 从个体到共生",
+  columns: ["time", "music", "speech", "formation", "visual", "lighting", "props"],
+  rows: [
+    { id: "c1", sectionId: "s1", durationSeconds: 30, time: "开场｜约30秒", music: "低频环境音进入", speech: "（无台词）", people: 12, lead: true, formationNote: "12人散点，领舞居中唤醒", visual: "主屏：粒子微光缓慢漂浮", lighting: "冷蓝顶光，低亮度", props: "无" },
+    { id: "c2", sectionId: "s2", durationSeconds: 45, time: "发展｜约45秒", music: "节拍逐步叠加", speech: "旁白：个体，从未孤单。", people: 12, lead: false, formationNote: "两组镜像推进并向中心靠拢", visual: "主屏：粒子连线形成光路", lighting: "蓝转青，亮度上升", props: "无" },
+    { id: "c3", sectionId: "s3", durationSeconds: 30, time: "转场｜约30秒", music: "鼓点收紧，转场音效进入", speech: "（无台词）", people: 12, lead: false, formationNote: "两列穿插，形成中心通道", visual: "主屏：数据流向中心收束", lighting: "扫光与低频脉冲同步", props: "无" },
+    { id: "c4", sectionId: "s4", durationSeconds: 45, time: "高潮｜约45秒", music: "全奏爆发", speech: "（无台词）", people: 12, lead: true, formationNote: "全体聚合 V 字，领舞居中", visual: "主屏：全屏光网向外扩张", lighting: "暖金全场 + 追光领舞", props: "无" },
+    { id: "c5", sectionId: "s5", durationSeconds: 30, time: "结尾｜约30秒", music: "品牌音效落点并收束", speech: "旁白：共生，方能抵达。", people: 12, lead: true, formationNote: "全体面向观众定格，中心留展示区", visual: "主屏：品牌标识在光网中点亮", lighting: "暖金收束，保持可见度", props: "无" },
+  ],
+};
 
-/** 反馈影响分析 Agent 的兜底 ChangeProposal（含字段级修改指令） */
-export const FALLBACK_PROPOSALS: ChangeProposal[] = [
-  { id: "p1", title: "人数：12 人 → 8 人", before: "12 名舞者", after: "8 名舞者", reason: "导演要求缩减规模，需重排队形与画面密度。", deps: ["队形", "画面密度", "参考图"], edits: [{ rowIndex: -1, field: "people", value: 8 }] },
-  { id: "p2", title: "结尾更有力量感（最后 30 秒）", before: "暖金全场 + 追光领舞", after: "暖金全场 + 频闪爆点 + 追光领舞", reason: "增强结尾情绪，需联动音乐节奏、灯光亮度与 LED 动势。", deps: ["音乐节奏", "灯光亮度", "LED 动势"], edits: [{ rowIndex: 3, field: "lighting", value: "暖金全场 + 频闪爆点 + 追光领舞" }, { rowIndex: 3, field: "music", value: "全奏爆发（+8% 力度）+ 品牌音效重击落点" }] },
-  { id: "p3", title: "移除手持道具", before: "手持发光棒", after: "改为地面 LED 光带 / 徒手动作", reason: "删除手持道具，联动动作设计与视觉构图，并触发安全检查。", deps: ["动作设计", "视觉构图", "安全检查"], edits: [{ rowIndex: -1, field: "props", value: "无手持道具（改用地面 LED 光带）" }] },
-];
+export const FALLBACK_IMPACT: ImpactReport = {
+  must: [{ id: "i1", level: "must", title: "相关 Cue 的视觉与灯光", detail: "反馈直接改变舞台画面，需要同步更新对应段落。", sectionIds: ["s4"], cueIds: ["c4"], departments: ["视觉", "灯光"] }],
+  maybe: [{ id: "i2", level: "maybe", title: "演员调度", detail: "若视觉节奏改变，队形与动作可能需要微调。", sectionIds: ["s4"], cueIds: ["c4"], departments: ["演员/调度"] }],
+  unaffected: [{ id: "i3", level: "unaffected", title: "开场结构", detail: "当前反馈不影响开场段落。", sectionIds: ["s1"], cueIds: ["c1"], departments: [] }],
+};

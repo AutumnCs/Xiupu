@@ -6,16 +6,19 @@ import { toast } from "sonner";
 import { stageMuseApi } from "@/lib/api/stagemuse";
 import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
+import { PerformanceEditor } from "./performance-editor";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
 import type {
   StructuredRequirement,
   CreativeDirection,
+  ProjectBrief,
+  PerformanceDraft,
   PlanSnapshot,
   PlanRow,
-  ChangeProposal,
-  FieldEdit,
+  ImpactItem,
+  ImpactReport,
   ValidationIssue,
 } from "@/lib/agents/types";
 
@@ -23,8 +26,6 @@ const CASE_BRIEF =
   "3分钟科技品牌开场秀，主题「从个体到共生」；12名舞者（含1名领舞）；主LED屏，左右两个出入口；情绪从克制到连接再到爆发；结尾需体现品牌力量感。";
 const FEEDBACK_EXAMPLE = "人数改成8人；最后30秒更有力量感；不使用手持道具。";
 const COLS = ["time", "music", "speech", "formation", "visual", "lighting", "props", "camera", "notes"] as const;
-
-const clone = <T,>(o: T): T => JSON.parse(JSON.stringify(o));
 
 type VersionEntry = { ver: string; summary: string; time: string };
 
@@ -34,18 +35,21 @@ export function Workbench() {
   const [brief, setBrief] = useState("");
   const [projectMaterials, setProjectMaterials] = useState("");
   const [directorCreative, setDirectorCreative] = useState("");
+  const [project, setProject] = useState<ProjectBrief>({ projectName: "", directorRequirements: "", programMaterial: "", performers: "", stageConditions: "", creativeIntent: "", supportingMaterials: "" });
   const [requirement, setRequirement] = useState<StructuredRequirement | null>(null);
   const [requirementItems, setRequirementItems] = useState<RequirementItem[]>([]);
   const [reqFallback, setReqFallback] = useState(false);
   const [directions, setDirections] = useState<CreativeDirection[] | null>(null);
   const [selectedDir, setSelectedDir] = useState<string | null>(null);
+  const [performanceV1, setPerformanceV1] = useState<PerformanceDraft | null>(null);
+  const [performanceV2, setPerformanceV2] = useState<PerformanceDraft | null>(null);
   const [v1, setV1] = useState<PlanSnapshot | null>(null);
   const [v2, setV2] = useState<PlanSnapshot | null>(null);
   const [current, setCurrent] = useState<"v1" | "v2">("v1");
   const [selectedCueIndex, setSelectedCueIndex] = useState<number | null>(null);
   const [showDiff, setShowDiff] = useState(true);
   const [feedback, setFeedback] = useState("");
-  const [proposals, setProposals] = useState<ChangeProposal[] | null>(null);
+  const [impactReport, setImpactReport] = useState<ImpactReport | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
@@ -66,7 +70,9 @@ export function Workbench() {
       if (!response.ok || !result.ok) throw new Error("extract_failed");
       return `【${result.name}】\n${result.text}`;
     }));
-    setProjectMaterials((current) => [current, ...content].filter(Boolean).join("\n\n"));
+    const nextMaterials = [project.supportingMaterials, ...content].filter(Boolean).join("\n\n");
+    setProjectMaterials(nextMaterials);
+    setProject((current) => ({ ...current, supportingMaterials: nextMaterials }));
   }
 
   const nowTime = () =>
@@ -93,16 +99,18 @@ export function Workbench() {
   }
 
   const activePlan = current === "v2" && v2 ? v2 : v1;
+  const activePerformance = current === "v2" && performanceV2 ? performanceV2 : performanceV1;
 
   // ---- 节点 1：解析需求 ----
   async function onParse() {
-    if (!brief.trim()) return toast.error(t("stagemuse.toast.needInput"));
+    if (!project.directorRequirements.trim() && !project.programMaterial.trim()) return toast.error(t("stagemuse.toast.needInput"));
     setLoading("parse");
     try {
+      const nextProject = { ...project, projectName: project.projectName.trim() || "未命名节目", directorRequirements: project.directorRequirements || brief, creativeIntent: project.creativeIntent || directorCreative, supportingMaterials: project.supportingMaterials || projectMaterials };
+      setProject(nextProject);
       const r = await stageMuseApi.parseRequirement([
-        brief.trim(),
-        projectMaterials.trim() && `项目补充资料：\n${projectMaterials.trim()}`,
-        directorCreative.trim() && `秀导创意：\n${directorCreative.trim()}`,
+        `项目名称：${nextProject.projectName}`, `导演/甲方要求：${nextProject.directorRequirements}`, `节目资料：${nextProject.programMaterial}`,
+        `演员：${nextProject.performers}`, `舞台条件：${nextProject.stageConditions}`, `我的创意：${nextProject.creativeIntent}`, nextProject.supportingMaterials && `补充资料：${nextProject.supportingMaterials}`,
       ].filter(Boolean).join("\n\n"));
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
@@ -132,33 +140,39 @@ export function Workbench() {
     }
   }
 
-  // ---- 节点 3：选方向 → 生成方案表（占位） ----
+  // ---- 节点 3：选方向 → 生成完整演绎形式 ----
   function onSelectDir(id: string) {
     setSelectedDir(id);
+    setPerformanceV1(null);
+    setPerformanceV2(null);
+    setV1(null);
+    setV2(null);
+    setImpactReport(null);
+    setCurrent("v1");
   }
 
   function updateDirection(id: string, field: "title" | "concept" | "format") {
     return (value: string) => setDirections((current) => current?.map((direction) => direction.id === id ? { ...direction, [field]: value } : direction) ?? null);
   }
 
-  async function onGeneratePlan() {
+  async function onGeneratePerformance() {
     const direction = directions?.find((d) => d.id === selectedDir);
-    if (!direction) return;
+    if (!direction || !requirement) return;
     const loadingToast = toast.loading(t("stagemuse.plan.workingToast"), {
       description: t("stagemuse.plan.workingToastDescription"),
     });
-    setLoading("plan");
+    setLoading("performance");
     try {
-      const r = await stageMuseApi.generatePlan(direction, requirement);
-      setV1(r.data);
+      const r = await stageMuseApi.generatePerformance(project, requirement, direction);
+      setPerformanceV1(r.data);
+      setPerformanceV2(null);
+      setV1(null);
       setV2(null);
       setCurrent("v1");
-      setProposals(null);
-      addVersion("v1", t("stagemuse.log.v1"));
-      toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"), {
+      setImpactReport(null);
+      toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.performance.done"), {
         id: loadingToast,
       });
-      runValidate(r.data);
     } catch {
       toast.error(t("stagemuse.toast.failed"), { id: loadingToast });
     } finally {
@@ -166,15 +180,26 @@ export function Workbench() {
     }
   }
 
+  async function onGeneratePlan() {
+    if (!performanceV1) return;
+    setLoading("plan");
+    try {
+      const r = await stageMuseApi.generatePlan(project, performanceV1);
+      setV1(r.data); setV2(null); setCurrent("v1"); setImpactReport(null); addVersion("v1", t("stagemuse.log.v1"));
+      toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"));
+      runValidate(r.data);
+    } catch { handleErr(); } finally { setLoading(null); }
+  }
+
   // ---- 节点 5：反馈影响分析（占位） ----
   async function onAnalyze() {
-    if (!v1) return toast.error(t("stagemuse.toast.needPlan"));
+    if (!activePlan || !activePerformance) return toast.error(t("stagemuse.toast.needPlan"));
     if (!feedback.trim()) return toast.error(t("stagemuse.toast.needFb"));
     setLoading("fb");
     try {
-      const r = await stageMuseApi.analyzeFeedback(feedback, v1);
-      setProposals(r.data);
-      setChecked(Object.fromEntries(r.data.map((p) => [p.id, true])));
+      const r = await stageMuseApi.analyzeFeedback(feedback, activePerformance, activePlan);
+      setImpactReport(r.data);
+      setChecked(Object.fromEntries([...r.data.must, ...r.data.maybe].map((item) => [item.id, item.level === "must"])));
       if (r.fallback) toast.message(t("stagemuse.toast.aiFallback"));
     } catch {
       handleErr();
@@ -184,17 +209,15 @@ export function Workbench() {
   }
 
   // ---- 节点 6：确认应用 → 生成 V2（本地联动，符合"先预览后应用"） ----
-  function onApply() {
-    if (!v1 || !proposals) return;
-    const chosen = proposals.filter((p) => checked[p.id]);
+  async function onApply() {
+    if (!activePlan || !activePerformance || !impactReport) return;
+    const chosen = [...impactReport.must, ...impactReport.maybe].filter((item) => checked[item.id]);
     if (!chosen.length) return toast.error(t("stagemuse.toast.noChange"));
-    const next = clone(v1);
-    chosen.forEach((p) => p.edits.forEach((e) => applyEdit(next, e)));
-    setV2(next);
-    setCurrent("v2");
-    addVersion("v2", `${t("stagemuse.log.v2")}（${chosen.length}）`);
-    toast.success(t("stagemuse.toast.v2Ready"));
-    runValidate(next);
+    setLoading("revision");
+    try {
+      const r = await stageMuseApi.generateRevision(feedback, activePerformance, activePlan, chosen as ImpactItem[]);
+      setPerformanceV2(r.data.performance); setV2(r.data.plan); setCurrent("v2"); addVersion("v2", `${t("stagemuse.log.v2")}（${chosen.length}）`); toast.success(t("stagemuse.toast.v2Ready")); runValidate(r.data.plan);
+    } catch { handleErr(); } finally { setLoading(null); }
   }
 
   function editCell(rowIdx: number, col: EditableCueField, value: string) {
@@ -226,16 +249,35 @@ export function Workbench() {
           </div>
           {!requirement ? (
             <div className="p-3">
+              <input className="sm-ta min-h-0" value={project.projectName} onChange={(event) => setProject((value) => ({ ...value, projectName: event.target.value }))} placeholder={t("stagemuse.project.name")} />
               <textarea
                 className="sm-ta"
-                value={brief}
-                onChange={(e) => setBrief(e.target.value)}
+                value={project.directorRequirements}
+                onChange={(e) => { setBrief(e.target.value); setProject((value) => ({ ...value, directorRequirements: e.target.value })); }}
                 placeholder={t("stagemuse.req.placeholder")}
               />
               <textarea
                 className="sm-ta mt-2"
-                value={directorCreative}
-                onChange={(e) => setDirectorCreative(e.target.value)}
+                value={project.programMaterial}
+                onChange={(e) => setProject((value) => ({ ...value, programMaterial: e.target.value }))}
+                placeholder={t("stagemuse.project.program")}
+              />
+              <textarea
+                className="sm-ta mt-2"
+                value={project.performers}
+                onChange={(e) => setProject((value) => ({ ...value, performers: e.target.value }))}
+                placeholder={t("stagemuse.project.performers")}
+              />
+              <textarea
+                className="sm-ta mt-2"
+                value={project.stageConditions}
+                onChange={(e) => setProject((value) => ({ ...value, stageConditions: e.target.value }))}
+                placeholder={t("stagemuse.project.stage")}
+              />
+              <textarea
+                className="sm-ta mt-2"
+                value={project.creativeIntent}
+                onChange={(e) => { setDirectorCreative(e.target.value); setProject((value) => ({ ...value, creativeIntent: e.target.value })); }}
                 placeholder={t("stagemuse.req.creativePlaceholder")}
               />
               <label className="sm-ghost mt-2 inline-flex cursor-pointer items-center">
@@ -244,15 +286,15 @@ export function Workbench() {
               </label>
               <textarea
                 className="sm-ta mt-2"
-                value={projectMaterials}
-                onChange={(e) => setProjectMaterials(e.target.value)}
+                value={project.supportingMaterials}
+                onChange={(e) => { setProjectMaterials(e.target.value); setProject((value) => ({ ...value, supportingMaterials: e.target.value })); }}
                 placeholder={t("stagemuse.req.materialsPlaceholder")}
               />
               <div className="mt-2.5 flex gap-2">
                 <button className="sm-solid" onClick={onParse} disabled={loading === "parse"}>
                   {loading === "parse" ? t("stagemuse.req.parsing") : t("stagemuse.req.parse")}
                 </button>
-                <button className="sm-ghost" onClick={() => setBrief(CASE_BRIEF)}>
+                <button className="sm-ghost" onClick={() => { setBrief(CASE_BRIEF); setProject((value) => ({ ...value, projectName: "科技品牌开场秀", directorRequirements: CASE_BRIEF, programMaterial: "3分钟开场节目", performers: "12名舞者（含1名领舞）", stageConditions: "主LED屏，左右两个出入口", creativeIntent: "克制到连接再到爆发" })); }}>
                   {t("stagemuse.req.loadCase")}
                 </button>
               </div>
@@ -311,8 +353,7 @@ export function Workbench() {
                   )}
                 </div>
               ))}
-              {selectedDir && <button className="sm-solid w-full" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.dir.confirm")}</button>}
-              {loading === "plan" && <p className="mt-2 text-center text-[11px]" style={{ color: "var(--sm-muted)" }} role="status">{t("stagemuse.plan.workingInline")}</p>}
+              {selectedDir && <button className="sm-solid w-full" onClick={onGeneratePerformance} disabled={loading === "performance"}>{loading === "performance" ? t("stagemuse.performance.loading") : t("stagemuse.performance.generate")}</button>}
             </div>
           </section>
         )}
@@ -320,6 +361,8 @@ export function Workbench() {
 
       {/* ============ CENTER ============ */}
       <div className="grid content-start gap-2.5">
+        {activePerformance && <PerformanceEditor performance={activePerformance} readOnly={current === "v2"} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} />}
+        {performanceV1 && !v1 && <button className="sm-solid w-full" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
         {activePlan && <CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} />}
         <section className="sm-panel">
           <div className="sm-phead">
@@ -456,40 +499,21 @@ export function Workbench() {
           </div>
         </section>
 
-        {proposals && (
+        {impactReport && (
           <section className="sm-panel">
             <div className="sm-phead">
               <h2>{t("stagemuse.prop.title")}</h2>
-              <span className="sm-lab">{proposals.length} PROPOSALS</span>
+              <span className="sm-lab">IMPACT REPORT</span>
             </div>
             <div className="p-3 pb-1">
               <p className="mb-2 text-[11px]" style={{ color: "var(--sm-muted)" }}>
                 {t("stagemuse.prop.hint")}
               </p>
-              {proposals.map((p) => (
-                <div key={p.id} className="sm-prop">
-                  <input
-                    type="checkbox"
-                    checked={!!checked[p.id]}
-                    onChange={(e) => setChecked((c) => ({ ...c, [p.id]: e.target.checked }))}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h4>{p.title}</h4>
-                    <div className="sm-diff">
-                      <span className="sm-before">{p.before}</span>{" "}
-                      <span className="sm-after">→ {p.after}</span>
-                    </div>
-                    <p className="reason">{p.reason}</p>
-                    <div className="sm-chips">
-                      {p.deps.map((d) => (
-                        <span key={d} className="sm-chip">{d}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <button className="sm-solid w-full" onClick={onApply}>
-                {t("stagemuse.prop.apply")}
+              <ImpactGroup title={t("stagemuse.impact.must")} items={impactReport.must} checked={checked} onChange={setChecked} selectable />
+              <ImpactGroup title={t("stagemuse.impact.maybe")} items={impactReport.maybe} checked={checked} onChange={setChecked} selectable />
+              <ImpactGroup title={t("stagemuse.impact.unaffected")} items={impactReport.unaffected} checked={checked} onChange={setChecked} />
+              <button className="sm-solid w-full" onClick={() => void onApply()} disabled={loading === "revision"}>
+                {loading === "revision" ? t("stagemuse.impact.revising") : t("stagemuse.prop.apply")}
               </button>
             </div>
           </section>
@@ -613,10 +637,6 @@ function DepartmentRequirements({ plan, selectedCueIndex, onSelectCue }: { plan:
   );
 }
 
-// 按 Agent 返回的字段级修改指令应用到方案表（对任意反馈通用）
-function applyEdit(plan: PlanSnapshot, edit: FieldEdit) {
-  const targets = edit.rowIndex === -1 ? plan.rows : plan.rows[edit.rowIndex] ? [plan.rows[edit.rowIndex]] : [];
-  targets.forEach((row) => {
-    (row as unknown as Record<string, unknown>)[edit.field] = edit.value;
-  });
+function ImpactGroup({ title, items, checked, onChange, selectable = false }: { title: string; items: ImpactItem[]; checked: Record<string, boolean>; onChange: (next: Record<string, boolean>) => void; selectable?: boolean }) {
+  return <div className="mb-3"><b className="text-xs">{title}</b>{items.map((item) => <div key={item.id} className="sm-prop"><input type="checkbox" disabled={!selectable} checked={selectable ? !!checked[item.id] : true} onChange={(event) => onChange({ ...checked, [item.id]: event.target.checked })} /><div><h4>{item.title}</h4><p className="reason">{item.detail}</p><div className="sm-chips">{item.departments.map((department) => <span key={department} className="sm-chip">{department}</span>)}</div></div></div>)}</div>;
 }

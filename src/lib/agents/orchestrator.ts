@@ -1,15 +1,21 @@
 import "server-only";
 import { parseRequirement } from "./requirement-parser";
 import { generateDirections } from "./creative-director";
+import { composePerformance } from "./performance-composer";
 import { composePlan } from "./plan-composer";
 import { analyzeFeedback } from "./feedback-analyst";
+import { composeRevision } from "./revision-composer";
 import { validatePlan } from "./consistency-checker";
 import type {
   AgentResult,
   StructuredRequirement,
   CreativeDirection,
   PlanSnapshot,
-  ChangeProposal,
+  ProjectBrief,
+  PerformanceDraft,
+  ImpactReport,
+  ImpactItem,
+  RevisionSnapshot,
   ValidationIssue,
 } from "./types";
 
@@ -19,14 +25,14 @@ import type {
  * StageMuse 是「编排器 + 专职 Agent」架构，每个阶段是独立可替换的节点。
  * 关键铁律：AI 只负责生成/检查/联动；每个节点产出先进草稿态，由秀导确认后才进入下一步。
  *
- * 已接入真实模型的节点：
- *   1) requirement  —— 需求解析 Agent
- *   2) directions   —— 创意生成 Agent
- *   3) plan         —— 多专业方案生成 Agent（节目拆解 + 逐段专业内容）
- *   4) validate     —— 一致性检查 Agent（确定性规则优先 + AI 语义）
- *   5) feedback     —— 反馈解析 + 影响分析 Agent（含字段级修改指令）
- *
- *   6) apply        —— 联动更新目前在前端按 edits 应用（先预览后应用）
+ * 当前单节目闭环节点：
+ *   1) requirement  —— 需求解析
+ *   2) directions   —— 创意方向
+ *   3) performance  —— 完整演绎形式
+ *   4) plan         —— 全节目 Cue
+ *   5) feedback     —— 影响分析
+ *   6) revision     —— 确认后重建 V2
+ *   7) validate     —— 一致性检查（确定性规则优先 + AI 语义）
  * ----------------------------------------------------------------------------
  */
 
@@ -41,22 +47,26 @@ export const orchestrator = {
     return generateDirections({ requirement, viewerUserId });
   },
 
-  /** 节点 3：拆解选定方向为多专业方案表 */
-  async runPlan(
-    direction: CreativeDirection,
-    requirement?: StructuredRequirement | null,
-    viewerUserId?: string,
-  ): Promise<AgentResult<PlanSnapshot>> {
-    return composePlan({ direction, requirement, viewerUserId });
+  async runPerformance(project: ProjectBrief, requirement: StructuredRequirement, direction: CreativeDirection, viewerUserId?: string): Promise<AgentResult<PerformanceDraft>> {
+    return composePerformance({ project, requirement, direction, viewerUserId });
+  },
+
+  async runPlan(performance: PerformanceDraft, project: ProjectBrief, viewerUserId?: string): Promise<AgentResult<PlanSnapshot>> {
+    return composePlan({ performance, project, viewerUserId });
   },
 
   /** 节点 5：反馈解析 + 影响分析 */
   async runFeedback(
     feedback: string,
+    performance: PerformanceDraft,
     plan: PlanSnapshot,
     viewerUserId?: string,
-  ): Promise<AgentResult<ChangeProposal[]>> {
-    return analyzeFeedback({ feedback, plan, viewerUserId });
+  ): Promise<AgentResult<ImpactReport>> {
+    return analyzeFeedback({ feedback, performance, plan, viewerUserId });
+  },
+
+  async runRevision(feedback: string, performance: PerformanceDraft, plan: PlanSnapshot, impacts: ImpactItem[], viewerUserId?: string): Promise<AgentResult<RevisionSnapshot>> {
+    return composeRevision({ feedback, performance, plan, impacts, viewerUserId });
   },
 
   /** 节点 4：一致性检查（确定性规则 + AI 语义） */

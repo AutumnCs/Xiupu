@@ -3,8 +3,12 @@ import type {
   AgentResult,
   StructuredRequirement,
   CreativeDirection,
+  ProjectBrief,
+  PerformanceDraft,
   PlanSnapshot,
-  ChangeProposal,
+  ImpactItem,
+  ImpactReport,
+  RevisionSnapshot,
   ValidationIssue,
 } from "@/lib/agents/types";
 
@@ -34,10 +38,14 @@ export const stageMuseApi = {
     post<StructuredRequirement>("/api/agents/requirement", { brief }),
   generateDirections: (requirement: StructuredRequirement) =>
     post<CreativeDirection[]>("/api/agents/directions", { requirement }),
-  generatePlan: (direction: CreativeDirection, requirement: StructuredRequirement | null) =>
-    post<PlanSnapshot>("/api/agents/plan", { direction, requirement }),
-  analyzeFeedback: (feedback: string, plan: PlanSnapshot) =>
-    post<ChangeProposal[]>("/api/agents/feedback", { feedback, plan }),
+  generatePerformance: (project: ProjectBrief, requirement: StructuredRequirement, direction: CreativeDirection) =>
+    post<PerformanceDraft>("/api/agents/performance", { project, requirement, direction }),
+  generatePlan: (project: ProjectBrief, performance: PerformanceDraft) =>
+    post<PlanSnapshot>("/api/agents/plan", { project, performance }),
+  analyzeFeedback: (feedback: string, performance: PerformanceDraft, plan: PlanSnapshot) =>
+    post<ImpactReport>("/api/agents/feedback", { feedback, performance, plan }),
+  generateRevision: (feedback: string, performance: PerformanceDraft, plan: PlanSnapshot, impacts: ImpactItem[]) =>
+    post<RevisionSnapshot>("/api/agents/revision", { feedback, performance, plan, impacts }),
   validatePlan: (plan: PlanSnapshot) =>
     post<ValidationIssue[]>("/api/agents/validate", { plan }),
 };

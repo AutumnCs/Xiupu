@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { parseCueTimeRange } from "@/lib/project-state/timeline";
+import { getCueTimelineRanges } from "@/lib/project-state/timeline";
 import type { EditableCueField } from "@/lib/project-state/plan-edit";
 import type { PlanSnapshot } from "@/lib/agents/types";
 
@@ -17,11 +17,9 @@ export function CueTimeline({ plan, selected, onSelect, onEdit }: CueTimelinePro
   const { t } = useTranslation();
   const activeIndex = selected ?? 0;
   const activeRow = plan.rows[activeIndex];
-  const ranges = plan.rows.map((row) => parseCueTimeRange(row.time));
-  const starts = ranges.flatMap((range) => range ? [range.startSeconds] : []);
-  const ends = ranges.flatMap((range) => range ? [range.startSeconds + range.durationSeconds] : []);
-  const start = starts.length ? Math.min(...starts) : 0;
-  const end = ends.length ? Math.max(...ends) : start;
+  const ranges = getCueTimelineRanges(plan.rows);
+  const start = ranges.length ? Math.min(...ranges.map((range) => range.startSeconds)) : 0;
+  const end = ranges.length ? Math.max(...ranges.map((range) => range.startSeconds + range.durationSeconds)) : start;
 
   return (
     <section className="sm-panel">
@@ -37,7 +35,7 @@ export function CueTimeline({ plan, selected, onSelect, onEdit }: CueTimelinePro
         <div className="flex gap-2 overflow-x-auto pb-2" aria-label={t("stagemuse.timeline.title")}>
           {plan.rows.map((row, index) => {
             const range = ranges[index];
-            const width = range ? Math.max(142, Math.round((range.durationSeconds / Math.max(end - start, 1)) * 460)) : 142;
+            const width = Math.max(142, Math.round((range.durationSeconds / Math.max(end - start, 1)) * 460));
             return (
               <button
                 key={`${row.time}-${index}`}

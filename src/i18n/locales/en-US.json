@@ -101,6 +101,7 @@
       "genDir": "Generate directions",
       "generating": "Generating…"
     },
+    "project": { "name": "Project name", "program": "Program material: content, duration, order, and more", "performers": "Cast: count, roles, and constraints", "stage": "Stage conditions: LED, entrances, constraints" },
     "dir": {
       "title": "Creative Directions",
       "hint": "Pick one direction",
@@ -123,6 +124,7 @@
       "workingOutputCue": "Cue sheet",
       "workingOutputDepartments": "Departments"
     },
+    "performance": { "title": "Performance Treatment", "generate": "Generate full performance treatment", "loading": "Generating treatment…", "done": "Treatment generated. Review and edit it.", "generateCue": "Confirm treatment and generate full Cue sheet" },
     "col": {
       "time": "Timecode",
       "music": "Music / Cue",
@@ -146,6 +148,7 @@
       "hint": "Check the changes to apply; unchecked items stay unchanged.",
       "apply": "Confirm & build V2"
     },
+    "impact": { "must": "Definitely affected", "maybe": "Possibly affected — choose", "unaffected": "Not affected", "revising": "Building full V2…" },
     "status": {
       "title": "Version Log"
     },

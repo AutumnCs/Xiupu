@@ -12,6 +12,17 @@ export interface StructuredRequirement {
   pending: string[];    // 待确认（缺失/冲突，不静默猜测）
 }
 
+/** 单节目 Demo 的明确项目输入；不引入持久化模型。 */
+export interface ProjectBrief {
+  projectName: string;
+  directorRequirements: string;
+  programMaterial: string;
+  performers: string;
+  stageConditions: string;
+  creativeIntent: string;
+  supportingMaterials?: string;
+}
+
 /** 创意生成 Agent 输出：单个创意方向 */
 export interface CreativeDirection {
   id: string;
@@ -23,8 +34,29 @@ export interface CreativeDirection {
   difficulty: string;   // 难度：低/中/高
 }
 
+export interface PerformanceSection {
+  id: string;
+  label: string;
+  durationLabel: string;
+  staging: string;
+  blocking: string;
+  visual: string;
+  lighting: string;
+}
+
+/** 介于创意方向与 Cue 之间、可由秀导人工编辑的完整演绎形式。 */
+export interface PerformanceDraft {
+  title: string;
+  theme: string;
+  overview: string;
+  sections: PerformanceSection[];
+}
+
 /** 方案表单行（多专业内容，当前阶段为预置占位） */
 export interface PlanRow {
+  id?: string;
+  sectionId?: string;
+  durationSeconds?: number;
   time: string;
   music: string;
   speech: string;
@@ -44,22 +76,27 @@ export interface PlanSnapshot {
   rows: PlanRow[];
 }
 
-/** 单条字段级修改指令：让 V2 生成可对任意反馈通用 */
-export interface FieldEdit {
-  rowIndex: number;              // 目标行（-1 表示所有行）
-  field: string;                 // 目标列，如 "props" / "people" / "lighting"
-  value: string | number | boolean;
+export type ImpactLevel = "must" | "maybe" | "unaffected";
+
+export interface ImpactItem {
+  id: string;
+  level: ImpactLevel;
+  title: string;
+  detail: string;
+  sectionIds: string[];
+  cueIds: string[];
+  departments: string[];
 }
 
-/** 反馈影响分析 Agent 输出：单条修改预览 */
-export interface ChangeProposal {
-  id: string;
-  title: string;
-  before: string;
-  after: string;
-  reason: string;
-  deps: string[];
-  edits: FieldEdit[];            // 勾选应用后据此修改方案表
+export interface ImpactReport {
+  must: ImpactItem[];
+  maybe: ImpactItem[];
+  unaffected: ImpactItem[];
+}
+
+export interface RevisionSnapshot {
+  performance: PerformanceDraft;
+  plan: PlanSnapshot;
 }
 
 /** 一致性检查 Agent 输出：单条问题 */

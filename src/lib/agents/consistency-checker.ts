@@ -41,7 +41,9 @@ function runRules(rows: PlanRow[]): ValidationIssue[] {
     // 时间格式与连续性
     const tr = parseTime(r.time);
     if (!tr) {
-      issues.push({ severity: "warning", rowIndex: i, field: "time", message: `第${i + 1}段时间码格式无法解析（${r.time}）`, source: "rule" });
+      if (!Number.isFinite(r.durationSeconds)) {
+        issues.push({ severity: "warning", rowIndex: i, field: "time", message: `第${i + 1}段时间码格式无法解析（${r.time}）`, source: "rule" });
+      }
     } else {
       const [start, end] = tr;
       if (end <= start) {

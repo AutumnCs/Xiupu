@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { jsonWithGuest, requireGuest } from "@/lib/auth";
 import { orchestrator } from "@/lib/agents/orchestrator";
 import { AppAIUnavailableError, isProviderConfigured } from "@/lib/ai/provider";
-import type { PlanSnapshot } from "@/lib/agents/types";
+import type { PerformanceDraft, PlanSnapshot } from "@/lib/agents/types";
 
 export const maxDuration = 60;
 
@@ -13,18 +13,20 @@ export async function POST(request: NextRequest) {
 
   let feedback = "";
   let plan: PlanSnapshot | null = null;
+  let performance: PerformanceDraft | null = null;
   try {
     const body = await request.json();
     feedback = typeof body?.feedback === "string" ? body.feedback.trim() : "";
     if (body?.plan && Array.isArray(body.plan.rows)) plan = body.plan as PlanSnapshot;
+    if (body?.performance && Array.isArray(body.performance.sections)) performance = body.performance as PerformanceDraft;
   } catch {
     return jsonWithGuest({ ok: false, error: "invalid_body" }, guest, { status: 400 });
   }
   if (!feedback) return jsonWithGuest({ ok: false, error: "empty_feedback" }, guest, { status: 400 });
-  if (!plan) return jsonWithGuest({ ok: false, error: "missing_plan" }, guest, { status: 400 });
+  if (!plan || !performance) return jsonWithGuest({ ok: false, error: "missing_plan" }, guest, { status: 400 });
 
   try {
-    const result = await orchestrator.runFeedback(feedback, plan, guest.guestId);
+    const result = await orchestrator.runFeedback(feedback, performance, plan, guest.guestId);
     return jsonWithGuest({ ok: true, result }, guest);
   } catch (err) {
     if (err instanceof AppAIUnavailableError) {
