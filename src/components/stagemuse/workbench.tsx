@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
 import { stageMuseApi } from "@/lib/api/stagemuse";
-import { saveProject, type ProjectSnapshot } from "@/lib/api/projects";
+import { listProjectVersions, listProjects, loadProjectShare, loadProjectVersion, saveProject, type ProjectListItem, type ProjectSnapshot, type VersionListItem } from "@/lib/api/projects";
 import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
 import { PerformanceEditor } from "./performance-editor";
@@ -64,6 +64,38 @@ export function Workbench() {
   const [projectId, setProjectId] = useState<string | undefined>();
   const [shareToken, setShareToken] = useState<string | undefined>();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [savedProjects, setSavedProjects] = useState<ProjectListItem[]>([]);
+  const [databaseVersions, setDatabaseVersions] = useState<VersionListItem[]>([]);
+
+  function restoreSnapshot(snapshot: ProjectSnapshot, metadata?: { id?: string; shareToken?: string; shareUrl?: string }) {
+    if (metadata?.id) setProjectId(metadata.id);
+    if (metadata?.shareToken) setShareToken(metadata.shareToken);
+    if (metadata?.shareUrl) setShareUrl(metadata.shareUrl);
+    setProject(snapshot.project);
+    setBrief(snapshot.project.programMaterial);
+    setProjectMaterials(snapshot.project.supportingMaterials || "");
+    setRequirement(snapshot.requirement);
+    setRequirementItems(snapshot.requirement ? toRequirementItems(snapshot.requirement) : []);
+    setPerformanceV1(snapshot.performanceV1);
+    setPerformanceV2(snapshot.performanceV2);
+    setV1(snapshot.v1);
+    setV2(snapshot.v2);
+    setCurrent(snapshot.current);
+    setFeedback(snapshot.feedback);
+    setImpactReport(null);
+    setSkippedImpactIds(new Set());
+    setConfirmedImpactTitles([]);
+  }
+
+  async function refreshProjectLibrary(id = projectId) {
+    try {
+      const projects = await listProjects();
+      setSavedProjects(projects);
+      if (id) setDatabaseVersions(await listProjectVersions(id));
+    } catch {
+      // Persistence is optional for local demos; keep the workbench usable when Supabase is unavailable.
+    }
+  }
 
   async function onMaterialFiles(files: FileList | null) {
     const selected = Array.from(files ?? []);
@@ -90,33 +122,21 @@ export function Workbench() {
   useEffect(() => {
     const share = new URLSearchParams(window.location.search).get("share");
     if (!share) return;
-    fetch(`/api/projects?share=${encodeURIComponent(share)}`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error("project_load_failed");
-        return response.json() as Promise<{ ok: true; project: { id: string; snapshot: ProjectSnapshot } }>;
-      })
-      .then(({ project: saved }) => {
-        const snapshot = saved.snapshot;
-        setProjectId(saved.id);
-        setShareToken(share);
-        setShareUrl(window.location.href);
-        setProject(snapshot.project);
-        setBrief(snapshot.project.programMaterial);
-        setRequirement(snapshot.requirement);
-        setRequirementItems(snapshot.requirement ? toRequirementItems(snapshot.requirement) : []);
-        setPerformanceV1(snapshot.performanceV1);
-        setPerformanceV2(snapshot.performanceV2);
-        setV1(snapshot.v1);
-        setV2(snapshot.v2);
-        setCurrent(snapshot.current);
-        setFeedback(snapshot.feedback);
-        if (snapshot.v1) addVersion("v1", t("stagemuse.log.loaded"));
-        if (snapshot.v2) addVersion("v2", t("stagemuse.log.v2"));
+    loadProjectShare(share)
+      .then((saved) => {
+        restoreSnapshot(saved.snapshot, { id: saved.id, shareToken: share, shareUrl: window.location.href });
+        if (saved.snapshot.v1) addVersion("v1", t("stagemuse.log.loaded"));
+        if (saved.snapshot.v2) addVersion("v2", t("stagemuse.log.v2"));
         toast.success(t("stagemuse.persistence.loaded"));
       })
       .catch(() => toast.error(t("stagemuse.persistence.loadFailed")));
     // Share links are loaded once when the workbench mounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    listProjects().then((projects) => setSavedProjects(projects)).catch(() => undefined);
+    // The library is optional; failure must not block the local demo.
   }, []);
 
   function handleErr() {
@@ -133,6 +153,7 @@ export function Workbench() {
       setShareToken(saved.shareToken);
       setShareUrl(saved.shareUrl);
       addVersion(`v${saved.version}`, t("stagemuse.persistence.versionSaved"));
+      await refreshProjectLibrary(saved.id);
       toast.success(t("stagemuse.persistence.saved"));
     } catch {
       toast.error(t("stagemuse.persistence.unavailable"));
@@ -307,6 +328,28 @@ export function Workbench() {
     <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[300px_1fr_320px]">
       {/* ============ LEFT ============ */}
       <div className="grid content-start gap-2.5">
+        {savedProjects.length > 0 && (
+          <section className="sm-panel">
+            <div className="sm-phead"><h2>{t("stagemuse.persistence.projects")}</h2><span className="sm-lab">LIBRARY</span></div>
+            <div className="p-3 space-y-2">
+              {savedProjects.map((saved) => (
+                <button key={saved.id} type="button" className="w-full rounded-xl border px-3 py-2 text-left" style={{ borderColor: "var(--sm-border)", background: saved.id === projectId ? "var(--sm-yellow)" : "var(--sm-paper)" }} onClick={async () => {
+                  try {
+                    const loaded = await loadProjectShare(saved.share_token);
+                    restoreSnapshot(loaded.snapshot, { id: loaded.id, shareToken: saved.share_token, shareUrl: `${window.location.origin}/?share=${saved.share_token}` });
+                    setDatabaseVersions(await listProjectVersions(saved.id));
+                    addVersion("saved", t("stagemuse.persistence.loaded"));
+                    toast.success(t("stagemuse.persistence.loaded"));
+                  } catch { toast.error(t("stagemuse.persistence.loadFailed")); }
+                }}>
+                  <span className="block text-sm font-bold">{saved.title || t("stagemuse.persistence.untitled")}</span>
+                  <span className="text-[10px]" style={{ color: "var(--sm-muted)" }}>{new Date(saved.updated_at).toLocaleString("zh-CN")}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="sm-panel">
           <div className="sm-phead">
             <h2>{t("stagemuse.req.title")}</h2>
@@ -569,6 +612,15 @@ export function Workbench() {
                   <small>{v.time}</small>
                 </div>
               ))}
+              {databaseVersions.length > 0 && <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--sm-border)" }}>
+                <p className="mb-2 text-[11px] font-bold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.persistence.databaseVersions")}</p>
+                <div className="space-y-1.5">
+                  {databaseVersions.map((v) => <button key={v.id} type="button" className="flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left text-xs" style={{ borderColor: "var(--sm-border)" }} onClick={async () => {
+                    if (!projectId) return;
+                    try { const loaded = await loadProjectVersion(projectId, v.version); restoreSnapshot(loaded.snapshot); addVersion(`v${v.version}`, t("stagemuse.persistence.loaded")); toast.success(t("stagemuse.persistence.loaded")); } catch { toast.error(t("stagemuse.persistence.loadFailed")); }
+                  }}><span><b>V{v.version}</b> · {v.summary}</span><small style={{ color: "var(--sm-muted)" }}>{new Date(v.created_at).toLocaleString("zh-CN")}</small></button>)}
+                </div>
+              </div>}
             </div>
           </section>
         )}

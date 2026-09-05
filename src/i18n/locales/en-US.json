@@ -153,7 +153,7 @@
     "status": {
       "title": "Version Log"
     },
-    "persistence": { "save": "Save project & create share link", "saving": "Saving…", "saved": "Project saved; share link created", "versionSaved": "Database version recorded", "loaded": "Shared project loaded", "loadFailed": "This share link could not be loaded", "copy": "Copy link", "unavailable": "Saving is unavailable; run the Supabase migration first" },
+    "persistence": { "save": "Save project & create share link", "saving": "Saving…", "saved": "Project saved; share link created", "versionSaved": "Database version recorded", "loaded": "Project loaded", "loadFailed": "This project could not be loaded", "copy": "Copy link", "unavailable": "Saving is unavailable; run the Supabase migration first", "projects": "My projects", "untitled": "Untitled show", "databaseVersions": "Database versions" },
     "department": {
       "title": "Department Requirements",
       "autoExtract": "BY DEPARTMENT",
