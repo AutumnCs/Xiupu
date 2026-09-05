@@ -94,6 +94,7 @@
       "fixed": "已确定",
       "creative": "可创作",
       "pending": "待确认",
+      "pendingHint": "这里的问题需要你逐条补充；暂时没有答案可以留空，后续仍可调整。",
       "lock": "锁定",
       "unlock": "解锁",
       "remove": "删除",
@@ -101,7 +102,7 @@
       "genDir": "生成创意方向",
       "generating": "生成中…"
     },
-    "project": { "name": "项目名称", "program": "节目资料（节目内容、时长、顺序等）", "performers": "演员信息（人数、角色、限制等）", "stage": "舞台条件（LED、出入口、限制等）" },
+    "project": { "name": "项目名称（可选，系统也会自动识别）", "program": "节目资料（节目内容、时长、顺序等）", "performers": "演员信息（人数、角色、限制等）", "stage": "舞台条件（LED、出入口、限制等）" },
     "dir": {
       "title": "创意方向",
       "hint": "选择一个方向",

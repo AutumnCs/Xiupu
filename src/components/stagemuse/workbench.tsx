@@ -12,6 +12,7 @@ import { createRequirementItem, toggleRequirementLock, type RequirementItem } fr
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
 import { getNextImpact } from "@/lib/project-state/impact-queue";
+import { buildProjectBrief } from "@/lib/project-state/project-brief";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -36,7 +37,6 @@ export function Workbench() {
 
   const [brief, setBrief] = useState("");
   const [projectMaterials, setProjectMaterials] = useState("");
-  const [directorCreative, setDirectorCreative] = useState("");
   const [project, setProject] = useState<ProjectBrief>({ projectName: "", directorRequirements: "", programMaterial: "", performers: "", stageConditions: "", creativeIntent: "", supportingMaterials: "" });
   const [requirement, setRequirement] = useState<StructuredRequirement | null>(null);
   const [requirementItems, setRequirementItems] = useState<RequirementItem[]>([]);
@@ -107,14 +107,14 @@ export function Workbench() {
 
   // ---- 节点 1：解析需求 ----
   async function onParse() {
-    if (!project.directorRequirements.trim() && !project.programMaterial.trim()) return toast.error(t("stagemuse.toast.needInput"));
+    const rawBrief = brief.trim() || project.programMaterial.trim() || project.directorRequirements.trim() || projectMaterials.trim();
+    if (!rawBrief) return toast.error(t("stagemuse.toast.needInput"));
     setLoading("parse");
     try {
-      const nextProject = { ...project, projectName: project.projectName.trim() || "未命名节目", directorRequirements: project.directorRequirements || brief, creativeIntent: project.creativeIntent || directorCreative, supportingMaterials: project.supportingMaterials || projectMaterials };
+      const nextProject = { ...buildProjectBrief(rawBrief, project.supportingMaterials || projectMaterials), projectName: project.projectName.trim() || "未命名节目" };
       setProject(nextProject);
       const r = await stageMuseApi.parseRequirement([
-        `项目名称：${nextProject.projectName}`, `导演/甲方要求：${nextProject.directorRequirements}`, `节目资料：${nextProject.programMaterial}`,
-        `演员：${nextProject.performers}`, `舞台条件：${nextProject.stageConditions}`, `我的创意：${nextProject.creativeIntent}`, nextProject.supportingMaterials && `补充资料：${nextProject.supportingMaterials}`,
+        `项目资料：${rawBrief}`, nextProject.supportingMaterials && `补充资料：${nextProject.supportingMaterials}`,
       ].filter(Boolean).join("\n\n"));
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
@@ -260,37 +260,7 @@ export function Workbench() {
           </div>
           {!requirement ? (
             <div className="p-3">
-              <input className="sm-ta min-h-0" value={project.projectName} onChange={(event) => setProject((value) => ({ ...value, projectName: event.target.value }))} placeholder={t("stagemuse.project.name")} />
-              <textarea
-                className="sm-ta"
-                value={project.directorRequirements}
-                onChange={(e) => { setBrief(e.target.value); setProject((value) => ({ ...value, directorRequirements: e.target.value })); }}
-                placeholder={t("stagemuse.req.placeholder")}
-              />
-              <textarea
-                className="sm-ta mt-2"
-                value={project.programMaterial}
-                onChange={(e) => setProject((value) => ({ ...value, programMaterial: e.target.value }))}
-                placeholder={t("stagemuse.project.program")}
-              />
-              <textarea
-                className="sm-ta mt-2"
-                value={project.performers}
-                onChange={(e) => setProject((value) => ({ ...value, performers: e.target.value }))}
-                placeholder={t("stagemuse.project.performers")}
-              />
-              <textarea
-                className="sm-ta mt-2"
-                value={project.stageConditions}
-                onChange={(e) => setProject((value) => ({ ...value, stageConditions: e.target.value }))}
-                placeholder={t("stagemuse.project.stage")}
-              />
-              <textarea
-                className="sm-ta mt-2"
-                value={project.creativeIntent}
-                onChange={(e) => { setDirectorCreative(e.target.value); setProject((value) => ({ ...value, creativeIntent: e.target.value })); }}
-                placeholder={t("stagemuse.req.creativePlaceholder")}
-              />
+              <textarea className="sm-ta min-h-56" value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={t("stagemuse.req.placeholder")} />
               <label className="sm-ghost mt-2 inline-flex cursor-pointer items-center">
                 {t("stagemuse.req.importText")}
                 <input className="sr-only" type="file" accept=".txt,.md,.docx,.pdf,text/plain,text/markdown,application/pdf" multiple onChange={(event) => void onMaterialFiles(event.target.files)} />
@@ -319,6 +289,7 @@ export function Workbench() {
               )}
               <RequirementGroup tone="fixed" label={t("stagemuse.req.fixed")} items={requirementItems} onChange={setRequirementItems} />
               <RequirementGroup tone="creative" label={t("stagemuse.req.creative")} items={requirementItems} onChange={setRequirementItems} />
+              <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.req.pendingHint")}</p>
               <RequirementGroup tone="pending" label={t("stagemuse.req.pending")} items={requirementItems} onChange={setRequirementItems} />
               <button className="sm-solid w-full" onClick={onGenDir} disabled={loading === "dir"}>
                 {loading === "dir" ? t("stagemuse.req.generating") : t("stagemuse.req.genDir")}

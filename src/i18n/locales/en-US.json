@@ -94,6 +94,7 @@
       "fixed": "Confirmed",
       "creative": "Open to create",
       "pending": "To confirm",
+      "pendingHint": "Answer these questions one by one. You can leave unknown items blank and refine them later.",
       "lock": "Lock",
       "unlock": "Unlock",
       "remove": "Remove",
@@ -101,7 +102,7 @@
       "genDir": "Generate directions",
       "generating": "Generating…"
     },
-    "project": { "name": "Project name", "program": "Program material: content, duration, order, and more", "performers": "Cast: count, roles, and constraints", "stage": "Stage conditions: LED, entrances, constraints" },
+    "project": { "name": "Project name (optional; it can be inferred)", "program": "Program material: content, duration, order, and more", "performers": "Cast: count, roles, and constraints", "stage": "Stage conditions: LED, entrances, constraints" },
     "dir": {
       "title": "Creative Directions",
       "hint": "Pick one direction",
