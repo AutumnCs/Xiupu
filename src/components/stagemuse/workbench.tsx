@@ -29,6 +29,7 @@ export function Workbench() {
   const { t } = useTranslation();
 
   const [brief, setBrief] = useState("");
+  const [projectMaterials, setProjectMaterials] = useState("");
   const [requirement, setRequirement] = useState<StructuredRequirement | null>(null);
   const [requirementItems, setRequirementItems] = useState<RequirementItem[]>([]);
   const [reqFallback, setReqFallback] = useState(false);
@@ -76,7 +77,7 @@ export function Workbench() {
     if (!brief.trim()) return toast.error(t("stagemuse.toast.needInput"));
     setLoading("parse");
     try {
-      const r = await stageMuseApi.parseRequirement(brief);
+      const r = await stageMuseApi.parseRequirement([brief.trim(), projectMaterials.trim()].filter(Boolean).join("\n\n项目补充资料：\n"));
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
       setReqFallback(!!r.fallback);
@@ -192,6 +193,12 @@ export function Workbench() {
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
                 placeholder={t("stagemuse.req.placeholder")}
+              />
+              <textarea
+                className="sm-ta mt-2"
+                value={projectMaterials}
+                onChange={(e) => setProjectMaterials(e.target.value)}
+                placeholder={t("stagemuse.req.materialsPlaceholder")}
               />
               <div className="mt-2.5 flex gap-2">
                 <button className="sm-solid" onClick={onParse} disabled={loading === "parse"}>

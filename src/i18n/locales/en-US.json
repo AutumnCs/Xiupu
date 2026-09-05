@@ -85,6 +85,7 @@
       "loadCase": "Load demo case",
       "empty": "Paste the show brief, or click \"Load demo case\" to start.",
       "placeholder": "e.g. 3-min tech brand opening show, theme \"From Individual to Symbiosis\", 12 dancers, main LED, two side entries, emotion from restraint to burst…",
+      "materialsPlaceholder": "Supporting materials: client requirements, run sheet, cast details, stage constraints, or references.",
       "parse": "Parse requirements",
       "parsing": "Parsing…",
       "fixed": "Confirmed",
