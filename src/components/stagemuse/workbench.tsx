@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { stageMuseApi } from "@/lib/api/stagemuse";
 import { FormationSvg } from "./formation-svg";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
+import { isTextMaterial } from "@/lib/project-state/materials";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -47,6 +48,13 @@ export function Workbench() {
   const [validating, setValidating] = useState(false);
 
   const [loading, setLoading] = useState<string | null>(null);
+
+  async function onMaterialFiles(files: FileList | null) {
+    const selected = Array.from(files ?? []).filter((file) => isTextMaterial(file.name));
+    if (!selected.length) return toast.error(t("stagemuse.req.textFilesOnly"));
+    const content = await Promise.all(selected.map(async (file) => `【${file.name}】\n${await file.text()}`));
+    setProjectMaterials((current) => [current, ...content].filter(Boolean).join("\n\n"));
+  }
 
   const nowTime = () =>
     new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
@@ -194,6 +202,10 @@ export function Workbench() {
                 onChange={(e) => setBrief(e.target.value)}
                 placeholder={t("stagemuse.req.placeholder")}
               />
+              <label className="sm-ghost mt-2 inline-flex cursor-pointer items-center">
+                {t("stagemuse.req.importText")}
+                <input className="sr-only" type="file" accept=".txt,.md,text/plain,text/markdown" multiple onChange={(event) => void onMaterialFiles(event.target.files)} />
+              </label>
               <textarea
                 className="sm-ta mt-2"
                 value={projectMaterials}

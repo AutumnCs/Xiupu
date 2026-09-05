@@ -86,6 +86,8 @@
       "empty": "粘贴节目要求，或点击「加载固定案例」开始。",
       "placeholder": "例：3分钟科技品牌开场秀，主题「从个体到共生」，12名舞者，主LED屏，左右出入口，情绪从克制到爆发……",
       "materialsPlaceholder": "补充资料（可粘贴甲方要求、节目单、演员信息、舞台条件、参考说明等）",
+      "importText": "导入 TXT / Markdown",
+      "textFilesOnly": "当前仅支持 TXT 或 Markdown 文件",
       "parse": "解析需求",
       "parsing": "解析中…",
       "fixed": "已确定",
