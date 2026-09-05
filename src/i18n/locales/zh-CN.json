@@ -153,7 +153,7 @@
     "status": {
       "title": "版本记录"
     },
-    "persistence": { "save": "保存项目并生成分享链接", "saving": "保存中…", "saved": "项目已保存，分享链接已生成", "copy": "复制链接", "unavailable": "暂时无法保存，请确认 Supabase migration 已执行" },
+    "persistence": { "save": "保存项目并生成分享链接", "saving": "保存中…", "saved": "项目已保存，分享链接已生成", "loaded": "分享项目已载入", "loadFailed": "分享链接暂时无法载入", "copy": "复制链接", "unavailable": "暂时无法保存，请确认 Supabase migration 已执行" },
     "department": {
       "title": "部门需求",
       "autoExtract": "按部门汇总",
@@ -180,7 +180,8 @@
     },
     "log": {
       "v1": "初版方案生成",
-      "v2": "联动修改应用"
+      "v2": "联动修改应用",
+      "loaded": "从分享链接载入"
     },
     "ai": {
       "badge": "AI 生成 · 草稿",

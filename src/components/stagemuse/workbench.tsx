@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
@@ -86,6 +86,38 @@ export function Workbench() {
     new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
   const addVersion = (ver: string, summary: string) =>
     setVersions((v) => [{ ver, summary, time: nowTime() }, ...v]);
+
+  useEffect(() => {
+    const share = new URLSearchParams(window.location.search).get("share");
+    if (!share) return;
+    fetch(`/api/projects?share=${encodeURIComponent(share)}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error("project_load_failed");
+        return response.json() as Promise<{ ok: true; project: { id: string; snapshot: ProjectSnapshot } }>;
+      })
+      .then(({ project: saved }) => {
+        const snapshot = saved.snapshot;
+        setProjectId(saved.id);
+        setShareToken(share);
+        setShareUrl(window.location.href);
+        setProject(snapshot.project);
+        setBrief(snapshot.project.programMaterial);
+        setRequirement(snapshot.requirement);
+        setRequirementItems(snapshot.requirement ? toRequirementItems(snapshot.requirement) : []);
+        setPerformanceV1(snapshot.performanceV1);
+        setPerformanceV2(snapshot.performanceV2);
+        setV1(snapshot.v1);
+        setV2(snapshot.v2);
+        setCurrent(snapshot.current);
+        setFeedback(snapshot.feedback);
+        if (snapshot.v1) addVersion("v1", t("stagemuse.log.loaded"));
+        if (snapshot.v2) addVersion("v2", t("stagemuse.log.v2"));
+        toast.success(t("stagemuse.persistence.loaded"));
+      })
+      .catch(() => toast.error(t("stagemuse.persistence.loadFailed")));
+    // Share links are loaded once when the workbench mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleErr() {
     toast.error(t("stagemuse.toast.failed"));
