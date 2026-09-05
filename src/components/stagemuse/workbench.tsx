@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
 import { stageMuseApi } from "@/lib/api/stagemuse";
+import { saveProject, type ProjectSnapshot } from "@/lib/api/projects";
 import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
 import { PerformanceEditor } from "./performance-editor";
@@ -60,6 +61,9 @@ export function Workbench() {
   const validationRun = useRef(0);
 
   const [loading, setLoading] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | undefined>();
+  const [shareToken, setShareToken] = useState<string | undefined>();
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   async function onMaterialFiles(files: FileList | null) {
     const selected = Array.from(files ?? []);
@@ -85,6 +89,23 @@ export function Workbench() {
 
   function handleErr() {
     toast.error(t("stagemuse.toast.failed"));
+  }
+
+  async function onSaveProject() {
+    if (!v1) return toast.error(t("stagemuse.toast.needPlan"));
+    setLoading("save");
+    try {
+      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback };
+      const saved = await saveProject(snapshot, projectId, shareToken);
+      setProjectId(saved.id);
+      setShareToken(saved.shareToken);
+      setShareUrl(saved.shareUrl);
+      toast.success(t("stagemuse.persistence.saved"));
+    } catch {
+      toast.error(t("stagemuse.persistence.unavailable"));
+    } finally {
+      setLoading(null);
+    }
   }
 
   // ---- 节点 4：一致性检查（方案生成/更新后自动运行，满足 AC06） ----
@@ -504,6 +525,11 @@ export function Workbench() {
               <span className="sm-lab">SNAPSHOT</span>
             </div>
             <div className="p-3 pb-1">
+              <div className="mb-3 flex gap-2">
+                <button className="sm-solid flex-1" onClick={() => void onSaveProject()} disabled={loading === "save"}>{loading === "save" ? t("stagemuse.persistence.saving") : t("stagemuse.persistence.save")}</button>
+                {shareUrl && <button className="sm-ghost" onClick={() => void navigator.clipboard?.writeText(shareUrl)}>{t("stagemuse.persistence.copy")}</button>}
+              </div>
+              {shareUrl && <p className="mb-2 break-all text-[10px]" style={{ color: "var(--sm-muted)" }}>{shareUrl}</p>}
               {versions.map((v, i) => (
                 <div key={i} className={`sm-vitem ${i === 0 ? "top" : ""}`}>
                   <b>{v.ver.toUpperCase()}</b> · {v.summary}

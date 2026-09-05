@@ -153,6 +153,7 @@
     "status": {
       "title": "Version Log"
     },
+    "persistence": { "save": "Save project & create share link", "saving": "Saving…", "saved": "Project saved; share link created", "copy": "Copy link", "unavailable": "Saving is unavailable; run the Supabase migration first" },
     "department": {
       "title": "Department Requirements",
       "autoExtract": "BY DEPARTMENT",

@@ -12,7 +12,9 @@ bun run dev
 
 在 `.env` 中填入任意 OpenAI 兼容服务的 `AI_PROVIDER_BASE_URL`、`AI_PROVIDER_API_KEY` 和 `AI_PROVIDER_MODEL`，然后打开 [http://localhost:3000](http://localhost:3000)。密钥只在服务端 API 路由中使用。
 
-本阶段采用本地 HTTP-only 访客 Cookie，不需要注册或数据库。Supabase 的认证、项目持久化和文件存储将在下一阶段引入。
+当前 Demo 默认仍使用 HTTP-only 访客 Cookie；配置 Supabase 并执行 `supabase/migrations/20260906023000_projects.sql` 后，可以在版本记录区保存项目并生成分享链接。Supabase 的正式登录与文件存储留在后续阶段。
+
+Supabase 项目配置：在 Vercel 中设置 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 和服务端专用的 `SUPABASE_SERVICE_ROLE_KEY`。不要把 service role key 放进浏览器或提交到 Git。
 
 ## 验证与部署
 
