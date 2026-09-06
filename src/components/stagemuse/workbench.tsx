@@ -9,6 +9,7 @@ import { listProjectVersions, listProjects, loadProjectShare, loadProjectVersion
 import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
 import { PerformanceEditor } from "./performance-editor";
+import { VisualReferencePanel } from "./visual-reference-panel";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
@@ -514,6 +515,7 @@ export function Workbench() {
             </div>
           </section>
         )}
+        <div className="creative-only"><VisualReferencePanel project={project} direction={directions?.find((item) => item.id === selectedDir)} editable={editable} /></div>
       </div>
 
       {/* ============ CENTER ============ */}

@@ -56,3 +56,23 @@ export async function runAgentJSON<T>(input: RunAgentJSONInput): Promise<{ data:
   const data = extractJSON(raw) as T;
   return { data, raw };
 }
+
+type RunVisionAgentJSONInput = RunAgentJSONInput & { imageDataUrl: string };
+
+/** 多模态结构化调用：图片只在服务端随请求发送，不写入浏览器或日志。 */
+export async function runVisionAgentJSON<T>(input: RunVisionAgentJSONInput): Promise<{ data: T; raw: string }> {
+  const completion = await appAi.chat({
+    capability: "vision",
+    messages: [
+      { role: "system", content: input.system },
+      { role: "user", content: [{ type: "text", text: input.user }, { type: "image_url", image_url: { url: input.imageDataUrl } }] },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.45,
+    ...(input.viewerUserId ? { viewer_user_id: input.viewerUserId } : {}),
+    ...(input.params ?? {}),
+  });
+  const raw = completion?.choices?.[0]?.message?.content ?? "";
+  const data = extractJSON(raw) as T;
+  return { data, raw };
+}

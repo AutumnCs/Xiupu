@@ -34,6 +34,19 @@ export interface CreativeDirection {
   difficulty: string;   // 难度：低/中/高
 }
 
+/** 参考图分析 Agent 输出：先产出可编辑视觉方向，不直接生成图片。 */
+export interface VisualReferenceAnalysis {
+  summary: string;
+  styleTags: string[];
+  palette: string[];
+  stageElements: string[];
+  lighting: string[];
+  preservedElements: string[];
+  constraints: string[];
+  prompt: string;
+  uncertainties: string[];
+}
+
 export interface PerformanceSection {
   id: string;
   label: string;

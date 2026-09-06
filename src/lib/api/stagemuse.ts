@@ -10,6 +10,7 @@ import type {
   ImpactReport,
   RevisionSnapshot,
   ValidationIssue,
+  VisualReferenceAnalysis,
 } from "@/lib/agents/types";
 
 /** 未登录（401）专用错误，供 UI 引导登录 */
@@ -48,4 +49,15 @@ export const stageMuseApi = {
     post<RevisionSnapshot>("/api/agents/revision", { feedback, performance, plan, impacts }),
   validatePlan: (plan: PlanSnapshot) =>
     post<ValidationIssue[]>("/api/agents/validate", { plan }),
+  analyzeVisualReference: async (file: File, input: { project: ProjectBrief; direction?: CreativeDirection; logoNotes: string; mustKeep: string }): Promise<AgentResult<VisualReferenceAnalysis>> => {
+    const body = new FormData();
+    body.set("image", file); body.set("project", JSON.stringify(input.project)); body.set("logoNotes", input.logoNotes); body.set("mustKeep", input.mustKeep);
+    if (input.direction) body.set("direction", JSON.stringify(input.direction));
+    const res = await request("/api/agents/visual-reference", { method: "POST", body });
+    if (res.status === 401) throw new AuthRequiredError();
+    if (!res.ok) throw new Error(`请求失败 (${res.status})`);
+    const json = await res.json();
+    if (!json?.ok) throw new Error(json?.error || "visual_agent_failed");
+    return json.result as AgentResult<VisualReferenceAnalysis>;
+  },
 };

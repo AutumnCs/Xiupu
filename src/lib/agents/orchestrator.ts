@@ -6,6 +6,7 @@ import { composePlan } from "./plan-composer";
 import { analyzeFeedback } from "./feedback-analyst";
 import { composeRevision } from "./revision-composer";
 import { validatePlan } from "./consistency-checker";
+import { analyzeVisualReference } from "./visual-director";
 import type {
   AgentResult,
   StructuredRequirement,
@@ -17,6 +18,7 @@ import type {
   ImpactItem,
   RevisionSnapshot,
   ValidationIssue,
+  VisualReferenceAnalysis,
 } from "./types";
 
 /**
@@ -45,6 +47,10 @@ export const orchestrator = {
   /** 节点 2：创意生成 */
   async runDirections(requirement: StructuredRequirement, viewerUserId?: string): Promise<AgentResult<CreativeDirection[]>> {
     return generateDirections({ requirement, viewerUserId });
+  },
+
+  async runVisualReference(input: Parameters<typeof analyzeVisualReference>[0], viewerUserId?: string): Promise<AgentResult<VisualReferenceAnalysis>> {
+    return analyzeVisualReference({ ...input, viewerUserId });
   },
 
   async runPerformance(project: ProjectBrief, requirement: StructuredRequirement, direction: CreativeDirection, viewerUserId?: string): Promise<AgentResult<PerformanceDraft>> {
