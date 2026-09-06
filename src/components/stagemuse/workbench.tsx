@@ -14,6 +14,7 @@ import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
 import { getNextImpact } from "@/lib/project-state/impact-queue";
 import { buildProjectBrief } from "@/lib/project-state/project-brief";
+import { mergeClarificationsIntoBrief } from "@/lib/project-state/clarifications";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -203,6 +204,33 @@ export function Workbench() {
     }
   }
 
+  async function onReparseClarifications() {
+    if (!requirement) return;
+    const clarifications = requirementItems.filter((item) => item.tone === "pending").map((item) => item.text);
+    const baseBrief = brief || project.programMaterial;
+    const nextBrief = mergeClarificationsIntoBrief(baseBrief, clarifications);
+    if (nextBrief === baseBrief.trim()) return toast.error(t("stagemuse.toast.needClarification"));
+    setBrief(nextBrief);
+    setRequirement(null);
+    setDirections(null);
+    setSelectedDir(null);
+    setPerformanceV1(null);
+    setPerformanceV2(null);
+    setV1(null);
+    setV2(null);
+    setCurrent("v1");
+    setLoading("parse");
+    try {
+      const nextProject = { ...buildProjectBrief(nextBrief, project.supportingMaterials || projectMaterials), projectName: project.projectName.trim() || "未命名节目" };
+      setProject(nextProject);
+      const r = await stageMuseApi.parseRequirement(`项目资料：${nextBrief}\n\n补充资料：${nextProject.supportingMaterials || "无"}`);
+      setRequirement(r.data);
+      setRequirementItems(toRequirementItems(r.data));
+      setReqFallback(!!r.fallback);
+      toast.success(t("stagemuse.toast.reqDone"));
+    } catch { handleErr(); } finally { setLoading(null); }
+  }
+
   // ---- 节点 2：生成创意方向 ----
   async function onGenDir() {
     if (!requirement) return;
@@ -388,6 +416,9 @@ export function Workbench() {
               <RequirementGroup tone="creative" label={t("stagemuse.req.creative")} items={requirementItems} onChange={setRequirementItems} />
               <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.req.pendingHint")}</p>
               <RequirementGroup tone="pending" label={t("stagemuse.req.pending")} items={requirementItems} onChange={setRequirementItems} />
+              {requirementItems.some((item) => item.tone === "pending" && item.text.trim()) && <button className="sm-ghost mb-2 w-full" onClick={() => void onReparseClarifications()} disabled={loading === "parse"}>
+                {loading === "parse" ? t("stagemuse.req.parsing") : t("stagemuse.req.reparse")}
+              </button>}
               <button className="sm-solid w-full" onClick={onGenDir} disabled={loading === "dir"}>
                 {loading === "dir" ? t("stagemuse.req.generating") : t("stagemuse.req.genDir")}
               </button>
