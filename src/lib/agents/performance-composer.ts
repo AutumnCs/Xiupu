@@ -12,7 +12,7 @@ export async function composePerformance(input: { project: ProjectBrief; require
   try {
     const { data, raw } = await runAgentJSON<PerformanceDraft>({
       system: SYSTEM,
-      user: `项目：${input.project.projectName}\n导演要求：${input.project.directorRequirements}\n节目资料：${input.project.programMaterial}\n演员：${input.project.performers}\n舞台：${input.project.stageConditions}\n用户创意：${input.project.creativeIntent}\n\n创意方向：${input.direction.title}｜${input.direction.concept}｜${input.direction.format}\n\n已确定要求：${input.requirement.fixed.join("；")}`,
+      user: `项目：${input.project.projectName}\n导演要求：${input.project.directorRequirements}\n节目资料：${input.project.programMaterial}\n演员：${input.project.performers}\n舞台：${input.project.stageConditions}\n用户创意：${input.project.creativeIntent}\n补充资料：${input.project.supportingMaterials || "无"}\n创作者偏好（仅建议，不得覆盖硬约束）：${JSON.stringify(input.project.creatorProfile || null)}\n\n创意方向：${input.direction.title}｜${input.direction.concept}｜${input.direction.format}\n\n已确定要求：${input.requirement.fixed.join("；")}`,
       viewerUserId: input.viewerUserId,
     });
     const sections = Array.isArray(data.sections) ? data.sections.slice(0, 6).map((section, index) => ({

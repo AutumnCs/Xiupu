@@ -37,8 +37,8 @@ async function post<T>(url: string, body: unknown): Promise<AgentResult<T>> {
 export const stageMuseApi = {
   parseRequirement: (brief: string) =>
     post<StructuredRequirement>("/api/agents/requirement", { brief }),
-  generateDirections: (requirement: StructuredRequirement) =>
-    post<CreativeDirection[]>("/api/agents/directions", { requirement }),
+  generateDirections: (requirement: StructuredRequirement, project?: ProjectBrief) =>
+    post<CreativeDirection[]>("/api/agents/directions", { requirement, project }),
   generatePerformance: (project: ProjectBrief, requirement: StructuredRequirement, direction: CreativeDirection) =>
     post<PerformanceDraft>("/api/agents/performance", { project, requirement, direction }),
   generatePlan: (project: ProjectBrief, performance: PerformanceDraft) =>

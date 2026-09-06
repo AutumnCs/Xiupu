@@ -21,6 +21,25 @@ export interface ProjectBrief {
   stageConditions: string;
   creativeIntent: string;
   supportingMaterials?: string;
+  creatorProfile?: CreatorProfile;
+}
+
+/** 创作者的显式偏好：仅作为建议上下文，不能覆盖项目硬约束。 */
+export interface CreatorProfile {
+  aestheticPreferences: string;
+  collaborationPreferences: string;
+  outputDetail: "concise" | "balanced" | "detailed";
+}
+
+/** 运行轨迹仅记录元数据，不保存提示词、原始模型输出或资料正文。 */
+export interface AgentRunTrace {
+  id: string;
+  agentId: string;
+  status: "completed" | "failed";
+  inputSources: string[];
+  startedAt: string;
+  durationMs: number;
+  fallback?: boolean;
 }
 
 /** 创意生成 Agent 输出：单个创意方向 */

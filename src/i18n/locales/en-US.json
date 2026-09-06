@@ -201,6 +201,22 @@
       "applied": "Visual direction synced to {{affected}} Cues",
       "appliedWithSkipped": "Synced {{affected}} Cues; skipped {{skipped}} confirmed/locked Cues"
     },
+    "intelligence": {
+      "title": "Project Intelligence Context",
+      "knowledge": "Project knowledge",
+      "emptyKnowledge": "Add project material to see the sources available to each Agent.",
+      "profile": "Creator preferences",
+      "aestheticPlaceholder": "Visual preferences, e.g. restrained, translucent, avoid saturated colour",
+      "collaborationPlaceholder": "Collaboration preferences, e.g. structure first, execution detail second",
+      "detailLabel": "Output detail",
+      "concise": "Prefer concise output",
+      "balanced": "Prefer balanced output",
+      "detailed": "Prefer detailed output",
+      "profileHint": "Advisory context only. It never overrides project constraints, confirmed work, or locked Cues.",
+      "agents": "Agent responsibilities",
+      "runs": "Recent run trace",
+      "emptyRuns": "Once generation starts, this area records the context and outcome for each Agent."
+    },
     "timeline": {
       "title": "Cue Timeline",
       "cueCount": "{{count}} cues",

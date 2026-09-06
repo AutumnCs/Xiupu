@@ -5,9 +5,9 @@ import { ImagePlus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { stageMuseApi } from "@/lib/api/stagemuse";
-import type { CreativeDirection, ProjectBrief, VisualReferenceAnalysis } from "@/lib/agents/types";
+import type { AgentRunTrace, CreativeDirection, ProjectBrief, VisualReferenceAnalysis } from "@/lib/agents/types";
 
-export function VisualReferencePanel({ project, direction, editable, canApply, onApply }: { project: ProjectBrief; direction?: CreativeDirection; editable: boolean; canApply: boolean; onApply: (analysis: VisualReferenceAnalysis) => void }) {
+export function VisualReferencePanel({ project, direction, editable, canApply, onApply, onRun }: { project: ProjectBrief; direction?: CreativeDirection; editable: boolean; canApply: boolean; onApply: (analysis: VisualReferenceAnalysis) => void; onRun: (run: Omit<AgentRunTrace, "id">) => void }) {
   const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
@@ -24,8 +24,9 @@ export function VisualReferencePanel({ project, direction, editable, canApply, o
   };
   const analyze = async () => {
     if (!file) return toast.error(t("stagemuse.visual.chooseImage"));
+    const startedAt = Date.now();
     setLoading(true);
-    try { const response = await stageMuseApi.analyzeVisualReference(file, { project, direction, logoNotes, mustKeep }); setResult(response.data); toast.success(t("stagemuse.visual.done")); } catch { toast.error(t("stagemuse.visual.failed")); } finally { setLoading(false); }
+    try { const response = await stageMuseApi.analyzeVisualReference(file, { project, direction, logoNotes, mustKeep }); onRun({ agentId: response.agent, status: "completed", inputSources: ["舞台参考图", "项目资料", "品牌约束"], startedAt: new Date(startedAt).toISOString(), durationMs: Date.now() - startedAt, fallback: response.fallback }); setResult(response.data); toast.success(t("stagemuse.visual.done")); } catch { onRun({ agentId: "visual-director", status: "failed", inputSources: ["舞台参考图", "项目资料", "品牌约束"], startedAt: new Date(startedAt).toISOString(), durationMs: Date.now() - startedAt }); toast.error(t("stagemuse.visual.failed")); } finally { setLoading(false); }
   };
   return <section className="sm-panel sm-visual-panel">
     <div className="sm-phead"><div><h2>{t("stagemuse.visual.title")}</h2><span className="sm-lab">REFERENCE → DIRECTION</span></div><ImagePlus size={18} /></div>

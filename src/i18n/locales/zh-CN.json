@@ -201,6 +201,22 @@
       "applied": "视觉方向已同步到 {{affected}} 个 Cue",
       "appliedWithSkipped": "已同步 {{affected}} 个 Cue，{{skipped}} 个已确认/锁定 Cue 未覆盖"
     },
+    "intelligence": {
+      "title": "项目智能上下文",
+      "knowledge": "项目知识",
+      "emptyKnowledge": "输入项目资料后，这里会显示可供 Agent 使用的知识来源。",
+      "profile": "创作者偏好",
+      "aestheticPlaceholder": "审美偏好，例如：克制、通透、避免强饱和色",
+      "collaborationPlaceholder": "协作偏好，例如：先给结构，再展开执行细节",
+      "detailLabel": "输出粒度",
+      "concise": "偏好简洁输出",
+      "balanced": "偏好平衡输出",
+      "detailed": "偏好详细输出",
+      "profileHint": "仅作为建议上下文，不会覆盖本项目的硬约束、确认项或锁定 Cue。",
+      "agents": "Agent 分工",
+      "runs": "最近运行轨迹",
+      "emptyRuns": "开始生成后，这里会记录每个 Agent 使用的上下文和运行结果。"
+    },
     "timeline": {
       "title": "Cue 时间带",
       "cueCount": "{{count}} 个 Cue",

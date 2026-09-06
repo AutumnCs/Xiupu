@@ -45,8 +45,8 @@ export const orchestrator = {
   },
 
   /** 节点 2：创意生成 */
-  async runDirections(requirement: StructuredRequirement, viewerUserId?: string): Promise<AgentResult<CreativeDirection[]>> {
-    return generateDirections({ requirement, viewerUserId });
+  async runDirections(requirement: StructuredRequirement, project?: ProjectBrief, viewerUserId?: string): Promise<AgentResult<CreativeDirection[]>> {
+    return generateDirections({ requirement, project, viewerUserId });
   },
 
   async runVisualReference(input: Parameters<typeof analyzeVisualReference>[0], viewerUserId?: string): Promise<AgentResult<VisualReferenceAnalysis>> {

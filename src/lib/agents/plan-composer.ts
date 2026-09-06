@@ -25,7 +25,7 @@ export async function composePlan(input: { performance: PerformanceDraft; projec
   try {
     const { data, raw } = await runAgentJSON<{ segmentLabel: string; rows: PlanRow[] }>({
       system: SYSTEM,
-      user: `项目：${input.project.projectName}\n节目资料：${input.project.programMaterial}\n演员：${input.project.performers}\n舞台：${input.project.stageConditions}\n\n演绎形式：${JSON.stringify(input.performance)}`,
+      user: `项目：${input.project.projectName}\n节目资料：${input.project.programMaterial}\n演员：${input.project.performers}\n舞台：${input.project.stageConditions}\n补充资料：${input.project.supportingMaterials || "无"}\n创作者偏好（仅建议，不得覆盖硬约束）：${JSON.stringify(input.project.creatorProfile || null)}\n\n演绎形式：${JSON.stringify(input.performance)}`,
       viewerUserId: input.viewerUserId,
       params: { max_tokens: 2400, temperature: 0.5 },
     });

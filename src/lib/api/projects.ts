@@ -1,5 +1,5 @@
 import { request } from "@/lib/api/request";
-import type { PerformanceDraft, PlanSnapshot, ProjectBrief, StructuredRequirement } from "@/lib/agents/types";
+import type { AgentRunTrace, PerformanceDraft, PlanSnapshot, ProjectBrief, StructuredRequirement } from "@/lib/agents/types";
 import type { ProjectApprovalStatus } from "@/lib/project-state/project-governance";
 
 export type ProjectSnapshot = {
@@ -13,6 +13,7 @@ export type ProjectSnapshot = {
   feedback: string;
   approvalStatus?: ProjectApprovalStatus;
   revisionRecords?: RevisionRecord[];
+  agentRuns?: AgentRunTrace[];
 };
 
 export type RevisionRecord = { id: string; source: string; reason: string; cueIds: string[]; departments: string[]; status: "pending" | "confirmed" | "locked"; createdAt: string };

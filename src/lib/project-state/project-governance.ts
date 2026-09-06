@@ -15,6 +15,7 @@ export function toProjectSource(project: ProjectBrief): string {
     ["舞台条件", project.stageConditions],
     ["创意意图", project.creativeIntent],
     ["补充资料", project.supportingMaterials || ""],
+    ["创作者偏好", [project.creatorProfile?.aestheticPreferences, project.creatorProfile?.collaborationPreferences].filter(Boolean).join("；")],
   ];
   return fields.filter(([, value]) => value.trim()).map(([label, value]) => `${label}：${value.trim()}`).join("\n");
 }

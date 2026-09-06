@@ -10,6 +10,7 @@ import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
 import { PerformanceEditor } from "./performance-editor";
 import { VisualReferencePanel } from "./visual-reference-panel";
+import { ProjectIntelligencePanel } from "./project-intelligence-panel";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
@@ -30,6 +31,9 @@ import type {
   ImpactItem,
   ImpactReport,
   ValidationIssue,
+  AgentResult,
+  AgentRunTrace,
+  CreatorProfile,
 } from "@/lib/agents/types";
 
 const CASE_BRIEF =
@@ -44,7 +48,7 @@ export function Workbench() {
 
   const [brief, setBrief] = useState("");
   const [projectMaterials, setProjectMaterials] = useState("");
-  const [project, setProject] = useState<ProjectBrief>({ projectName: "", directorRequirements: "", programMaterial: "", performers: "", stageConditions: "", creativeIntent: "", supportingMaterials: "" });
+  const [project, setProject] = useState<ProjectBrief>({ projectName: "", directorRequirements: "", programMaterial: "", performers: "", stageConditions: "", creativeIntent: "", supportingMaterials: "", creatorProfile: { aestheticPreferences: "", collaborationPreferences: "", outputDetail: "balanced" } });
   const [requirement, setRequirement] = useState<StructuredRequirement | null>(null);
   const [requirementItems, setRequirementItems] = useState<RequirementItem[]>([]);
   const [reqFallback, setReqFallback] = useState(false);
@@ -75,6 +79,7 @@ export function Workbench() {
   const [approvalStatus, setApprovalStatus] = useState<ProjectApprovalStatus>("draft");
   const [workspaceView, setWorkspaceView] = useState<"creative" | "execution">("creative");
   const [revisionRecords, setRevisionRecords] = useState<RevisionRecord[]>([]);
+  const [agentRuns, setAgentRuns] = useState<AgentRunTrace[]>([]);
 
   function restoreSnapshot(snapshot: ProjectSnapshot, metadata?: { id?: string; shareToken?: string; shareUrl?: string }) {
     if (metadata?.id) setProjectId(metadata.id);
@@ -93,6 +98,7 @@ export function Workbench() {
     setFeedback(snapshot.feedback);
     setApprovalStatus(snapshot.approvalStatus || "draft");
     setRevisionRecords(snapshot.revisionRecords || []);
+    setAgentRuns(snapshot.agentRuns || []);
     setImpactReport(null);
     setSkippedImpactIds(new Set());
     setConfirmedImpactTitles([]);
@@ -150,6 +156,23 @@ export function Workbench() {
     // The library is optional; failure must not block the local demo.
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    try {
+      const saved = localStorage.getItem("xiupu-creator-profile");
+      if (!saved) return;
+      const profile = JSON.parse(saved) as CreatorProfile;
+      if (profile && typeof profile.aestheticPreferences === "string" && typeof profile.collaborationPreferences === "string" && ["concise", "balanced", "detailed"].includes(profile.outputDetail)) {
+        void Promise.resolve().then(() => {
+          if (active) setProject((current) => ({ ...current, creatorProfile: profile }));
+        });
+      }
+    } catch {
+      // A malformed local preference must not prevent the project workspace from opening.
+    }
+    return () => { active = false; };
+  }, []);
+
   function handleErr() {
     toast.error(t("stagemuse.toast.failed"));
   }
@@ -158,7 +181,7 @@ export function Workbench() {
     if (!v1) return toast.error(t("stagemuse.toast.needPlan"));
     setLoading("save");
     try {
-      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback, approvalStatus, revisionRecords };
+      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback, approvalStatus, revisionRecords, agentRuns };
       const saved = await saveProject(snapshot, projectId, shareToken);
       setProjectId(saved.id);
       setShareToken(saved.shareToken);
@@ -176,11 +199,14 @@ export function Workbench() {
   // ---- 节点 4：一致性检查（方案生成/更新后自动运行，满足 AC06） ----
   async function runValidate(plan: PlanSnapshot) {
     const run = ++validationRun.current;
+    const startedAt = Date.now();
     setValidating(true);
     try {
       const r = await stageMuseApi.validatePlan(plan);
+      recordAgentRun(r.agent, ["Cue 表"], startedAt, r);
       if (run === validationRun.current) setIssues(r.data);
     } catch {
+      recordFailedAgentRun("consistency-checker", ["Cue 表"], startedAt);
       if (run === validationRun.current) setIssues([]);
     } finally {
       if (run === validationRun.current) setValidating(false);
@@ -196,23 +222,45 @@ export function Workbench() {
     setProject((current) => ({ ...current, [field]: value }));
   }
 
+  function updateCreatorProfile(profile: CreatorProfile) {
+    setProject((current) => ({ ...current, creatorProfile: profile }));
+    localStorage.setItem("xiupu-creator-profile", JSON.stringify(profile));
+  }
+
+  function recordAgentRun<T>(agentId: string, inputSources: string[], startedAt: number, result: AgentResult<T>) {
+    const entry: AgentRunTrace = { id: crypto.randomUUID(), agentId, inputSources, startedAt: new Date(startedAt).toISOString(), durationMs: Date.now() - startedAt, status: "completed", fallback: result.fallback };
+    setAgentRuns((runs) => [entry, ...runs].slice(0, 20));
+  }
+
+  function recordFailedAgentRun(agentId: string, inputSources: string[], startedAt: number) {
+    const entry: AgentRunTrace = { id: crypto.randomUUID(), agentId, inputSources, startedAt: new Date(startedAt).toISOString(), durationMs: Date.now() - startedAt, status: "failed" };
+    setAgentRuns((runs) => [entry, ...runs].slice(0, 20));
+  }
+
+  function appendAgentRun(run: Omit<AgentRunTrace, "id">) {
+    setAgentRuns((runs) => [{ ...run, id: crypto.randomUUID() }, ...runs].slice(0, 20));
+  }
+
   // ---- 节点 1：解析需求 ----
   async function onParse() {
     const rawBrief = toProjectSource({ ...project, programMaterial: project.programMaterial || brief, supportingMaterials: project.supportingMaterials || projectMaterials });
     if (!rawBrief) return toast.error(t("stagemuse.toast.needInput"));
     setLoading("parse");
+    const startedAt = Date.now();
     try {
       const nextProject = { ...buildProjectBrief(rawBrief, project.supportingMaterials || projectMaterials), ...project, projectName: project.projectName.trim() || "未命名节目", programMaterial: project.programMaterial || brief || rawBrief, supportingMaterials: project.supportingMaterials || projectMaterials };
       setProject(nextProject);
       const r = await stageMuseApi.parseRequirement([
         `项目资料：${rawBrief}`, nextProject.supportingMaterials && `补充资料：${nextProject.supportingMaterials}`,
       ].filter(Boolean).join("\n\n"));
+      recordAgentRun(r.agent, ["项目资料", "补充资料"], startedAt, r);
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
       setReqFallback(!!r.fallback);
       setConfirmedImpactTitles([]);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.reqDone"));
     } catch {
+      recordFailedAgentRun("requirement-parser", ["项目资料", "补充资料"], startedAt);
       handleErr();
     } finally {
       setLoading(null);
@@ -235,15 +283,17 @@ export function Workbench() {
     setV2(null);
     setCurrent("v1");
     setLoading("parse");
+    const startedAt = Date.now();
     try {
       const nextProject = { ...buildProjectBrief(nextBrief, project.supportingMaterials || projectMaterials), ...project, projectName: project.projectName.trim() || "未命名节目", programMaterial: project.programMaterial || nextBrief, supportingMaterials: project.supportingMaterials || projectMaterials };
       setProject(nextProject);
       const r = await stageMuseApi.parseRequirement(`项目资料：${nextBrief}\n\n补充资料：${nextProject.supportingMaterials || "无"}`);
+      recordAgentRun(r.agent, ["补充确认", "项目资料"], startedAt, r);
       setRequirement(r.data);
       setRequirementItems(toRequirementItems(r.data));
       setReqFallback(!!r.fallback);
       toast.success(t("stagemuse.toast.reqDone"));
-    } catch { handleErr(); } finally { setLoading(null); }
+    } catch { recordFailedAgentRun("requirement-parser", ["补充确认", "项目资料"], startedAt); handleErr(); } finally { setLoading(null); }
   }
 
   // ---- 节点 2：生成创意方向 ----
@@ -252,11 +302,14 @@ export function Workbench() {
     const editedRequirement = toStructuredRequirement(requirementItems);
     setRequirement(editedRequirement);
     setLoading("dir");
+    const startedAt = Date.now();
     try {
-      const r = await stageMuseApi.generateDirections(editedRequirement);
+      const r = await stageMuseApi.generateDirections(editedRequirement, project);
+      recordAgentRun(r.agent, ["结构化需求", "项目资料", "创作者偏好"], startedAt, r);
       setDirections(r.data);
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirDone"));
     } catch {
+      recordFailedAgentRun("creative-director", ["结构化需求", "项目资料", "创作者偏好"], startedAt);
       handleErr();
     } finally {
       setLoading(null);
@@ -285,8 +338,10 @@ export function Workbench() {
       description: t("stagemuse.plan.workingToastDescription"),
     });
     setLoading("performance");
+    const startedAt = Date.now();
     try {
       const r = await stageMuseApi.generatePerformance(project, requirement, direction);
+      recordAgentRun(r.agent, ["项目资料", "结构化需求", "创意方向", "创作者偏好"], startedAt, r);
       setPerformanceV1(r.data);
       setPerformanceV2(null);
       setV1(null);
@@ -298,6 +353,7 @@ export function Workbench() {
         id: loadingToast,
       });
     } catch {
+      recordFailedAgentRun("performance-composer", ["项目资料", "结构化需求", "创意方向", "创作者偏好"], startedAt);
       toast.error(t("stagemuse.toast.failed"), { id: loadingToast });
     } finally {
       setLoading(null);
@@ -307,12 +363,14 @@ export function Workbench() {
   async function onGeneratePlan() {
     if (!performanceV1) return;
     setLoading("plan");
+    const startedAt = Date.now();
     try {
       const r = await stageMuseApi.generatePlan(project, performanceV1);
+      recordAgentRun(r.agent, ["演绎形式", "舞台条件", "项目资料"], startedAt, r);
       setV1(r.data); setV2(null); setCurrent("v1"); setImpactReport(null); setConfirmedImpactTitles([]); addVersion("v1", t("stagemuse.log.v1"));
       toast.success(r.fallback ? t("stagemuse.toast.aiFallback") : t("stagemuse.toast.dirSelected"));
       runValidate(r.data);
-    } catch { handleErr(); } finally { setLoading(null); }
+    } catch { recordFailedAgentRun("plan-composer", ["演绎形式", "舞台条件", "项目资料"], startedAt); handleErr(); } finally { setLoading(null); }
   }
 
   // ---- 节点 5：反馈影响分析 ----
@@ -320,13 +378,16 @@ export function Workbench() {
     if (!activePlan || !activePerformance) return toast.error(t("stagemuse.toast.needPlan"));
     if (!feedback.trim()) return toast.error(t("stagemuse.toast.needFb"));
     setLoading("fb");
+    const startedAt = Date.now();
     try {
       const r = await stageMuseApi.analyzeFeedback(feedback, activePerformance, activePlan);
+      recordAgentRun(r.agent, ["导演反馈", "演绎形式", "Cue 表"], startedAt, r);
       setImpactReport(r.data);
       setSkippedImpactIds(new Set());
       setConfirmedImpactTitles([]);
       if (r.fallback) toast.message(t("stagemuse.toast.aiFallback"));
     } catch {
+      recordFailedAgentRun("feedback-analyst", ["导演反馈", "演绎形式", "Cue 表"], startedAt);
       handleErr();
     } finally {
       setLoading(null);
@@ -339,17 +400,20 @@ export function Workbench() {
     const locked = hasLockedAffectedCue(activePlan, impact.cueIds);
     if (locked.length) return toast.error(t("stagemuse.toast.lockedImpact", { cues: locked.join("、") }));
     setLoading("revision");
+    const startedAt = Date.now();
     try {
       const r = await stageMuseApi.generateRevision(feedback, activePerformance, activePlan, [impact]);
+      recordAgentRun(r.agent, ["导演反馈", "确认影响", "当前方案"], startedAt, r);
       const nextConfirmedTitles = [...confirmedImpactTitles, impact.title];
       setRevisionRecords((records) => [{ id: impact.id, source: t("stagemuse.revision.source"), reason: feedback, cueIds: impact.cueIds, departments: impact.departments, status: "confirmed", createdAt: new Date().toISOString() }, ...records]);
       setPerformanceV2(r.data.performance); setV2(r.data.plan); setCurrent("v2"); addVersion("v2", `${t("stagemuse.log.v2")}（1）`); runValidate(r.data.plan);
       const reassessed = await stageMuseApi.analyzeFeedback(feedback, r.data.performance, r.data.plan, nextConfirmedTitles);
+      recordAgentRun(reassessed.agent, ["导演反馈", "V2 方案"], startedAt, reassessed);
       setConfirmedImpactTitles(nextConfirmedTitles);
       setImpactReport(reassessed.data);
       setSkippedImpactIds(new Set());
       toast.success(t("stagemuse.toast.v2Ready"));
-    } catch { handleErr(); } finally { setLoading(null); }
+    } catch { recordFailedAgentRun("revision-composer", ["导演反馈", "确认影响", "当前方案"], startedAt); handleErr(); } finally { setLoading(null); }
   }
 
   function editCell(rowIdx: number, col: EditableCueField, value: string) {
@@ -490,6 +554,8 @@ export function Workbench() {
           )}
         </section>
 
+        <ProjectIntelligencePanel project={project} requirement={requirement} plan={activePlan} runs={agentRuns} editable={editable} onProfileChange={updateCreatorProfile} />
+
         {directions && (
           <section className="sm-panel creative-only">
             <div className="sm-phead">
@@ -531,7 +597,7 @@ export function Workbench() {
             </div>
           </section>
         )}
-        <div className="creative-only"><VisualReferencePanel project={project} direction={directions?.find((item) => item.id === selectedDir)} editable={editable} canApply={!!activePerformance} onApply={onApplyVisualReference} /></div>
+        <div className="creative-only"><VisualReferencePanel project={project} direction={directions?.find((item) => item.id === selectedDir)} editable={editable} canApply={!!activePerformance} onApply={onApplyVisualReference} onRun={appendAgentRun} /></div>
       </div>
 
       {/* ============ CENTER ============ */}

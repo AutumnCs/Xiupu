@@ -1,7 +1,7 @@
 import "server-only";
 import { runAgentJSON } from "./run-agent";
 import { FALLBACK_DIRECTIONS } from "./preset-case";
-import type { AgentResult, CreativeDirection, StructuredRequirement } from "./types";
+import type { AgentResult, CreativeDirection, ProjectBrief, StructuredRequirement } from "./types";
 
 /**
  * 创意生成 Agent
@@ -18,6 +18,7 @@ id 用 d1/d2/d3。使用简体中文。`;
 
 export async function generateDirections(input: {
   requirement: StructuredRequirement;
+  project?: ProjectBrief;
   viewerUserId?: string;
 }): Promise<AgentResult<CreativeDirection[]>> {
   const agent = "creative-director";
@@ -30,7 +31,7 @@ export async function generateDirections(input: {
   try {
     const { data, raw } = await runAgentJSON<{ directions: CreativeDirection[] }>({
       system: SYSTEM,
-      user: `结构化需求：\n${reqText}`,
+      user: `结构化需求：\n${reqText}\n\n项目上下文：${input.project ? JSON.stringify({ projectName: input.project.projectName, programMaterial: input.project.programMaterial, stageConditions: input.project.stageConditions, creativeIntent: input.project.creativeIntent, supportingMaterials: input.project.supportingMaterials, creatorProfile: input.project.creatorProfile }) : "未提供"}`,
       viewerUserId: input.viewerUserId,
     });
     const directions = Array.isArray(data.directions) ? data.directions : [];
