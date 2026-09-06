@@ -71,6 +71,7 @@ export function Workbench() {
   const [savedProjects, setSavedProjects] = useState<ProjectListItem[]>([]);
   const [databaseVersions, setDatabaseVersions] = useState<VersionListItem[]>([]);
   const [approvalStatus, setApprovalStatus] = useState<ProjectApprovalStatus>("draft");
+  const [workspaceView, setWorkspaceView] = useState<"creative" | "execution">("creative");
   const [revisionRecords, setRevisionRecords] = useState<RevisionRecord[]>([]);
 
   function restoreSnapshot(snapshot: ProjectSnapshot, metadata?: { id?: string; shareToken?: string; shareUrl?: string }) {
@@ -384,8 +385,12 @@ export function Workbench() {
   const diffOn = showDiff && current === "v2" && !!v2 && !!v1;
   const versionChanges = v1 && v2 ? summarizePlanChanges(v1, v2) : [];
 
-  return (
-    <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[300px_1fr_320px]">
+  return (<>
+    <nav className="studio-view-tabs" aria-label={t("stagemuse.views.label")}>
+      <button className={workspaceView === "creative" ? "active" : ""} onClick={() => setWorkspaceView("creative")}>{t("stagemuse.views.creative")}<small>{t("stagemuse.views.creativeHint")}</small></button>
+      <button className={workspaceView === "execution" ? "active" : ""} onClick={() => setWorkspaceView("execution")}>{t("stagemuse.views.execution")}<small>{t("stagemuse.views.executionHint")}</small></button>
+    </nav>
+    <div data-view={workspaceView} className="grid grid-cols-1 gap-2.5 lg:grid-cols-[300px_1fr_320px] workspace-split">
       {/* ============ LEFT ============ */}
       <div className="grid content-start gap-2.5">
         {savedProjects.length > 0 && (
@@ -410,7 +415,7 @@ export function Workbench() {
           </section>
         )}
 
-        <section className="sm-panel">
+        <section className="sm-panel creative-only">
           <div className="sm-phead">
             <h2>{t("stagemuse.req.title")}</h2>
             <span className="sm-lab">INPUT / BASELINE</span>
@@ -469,7 +474,7 @@ export function Workbench() {
         </section>
 
         {directions && (
-          <section className="sm-panel">
+          <section className="sm-panel creative-only">
             <div className="sm-phead">
               <h2>{t("stagemuse.dir.title")}</h2>
               <span className="sm-lab">3 OPTIONS</span>
@@ -513,10 +518,10 @@ export function Workbench() {
 
       {/* ============ CENTER ============ */}
       <div className="grid content-start gap-2.5">
-        {activePerformance && <PerformanceEditor performance={activePerformance} readOnly={current === "v2" || !editable} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} />}
-        {performanceV1 && !v1 && <button className="sm-solid w-full" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
-        {activePlan && <CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} editable={editable} onStatusChange={setCueStatus} />}
-        <section className="sm-panel">
+        {activePerformance && <div className="creative-only"><PerformanceEditor performance={activePerformance} readOnly={current === "v2" || !editable} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} /></div>}
+        {performanceV1 && !v1 && <button className="sm-solid w-full creative-only" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
+        {activePlan && <div className="execution-only"><CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} editable={editable} onStatusChange={setCueStatus} /></div>}
+        <section className="sm-panel execution-only">
           <div className="sm-phead">
             <div>
               <h2>{t("stagemuse.plan.title")}</h2>
@@ -631,7 +636,7 @@ export function Workbench() {
 
       {/* ============ RIGHT ============ */}
       <div className="grid content-start gap-2.5">
-        <section className="sm-panel">
+        <section className="sm-panel execution-only">
           <div className="sm-phead">
             <h2>{t("stagemuse.fb.title")}</h2>
             <span className="sm-lab">HUMAN GATE</span>
@@ -655,6 +660,7 @@ export function Workbench() {
         </section>
 
         {impactReport && (
+          <div className="execution-only">
           <section className="sm-panel">
             <div className="sm-phead">
               <h2>{t("stagemuse.prop.title")}</h2>
@@ -667,10 +673,11 @@ export function Workbench() {
               {nextImpact ? <ImpactDecision impact={nextImpact} loading={loading === "revision"} onConfirm={() => void onApply(nextImpact)} onSkip={() => setSkippedImpactIds((current) => new Set([...current, nextImpact.id]))} /> : <p className="mb-3 text-xs font-bold" style={{ color: "var(--sm-green)" }}>{t("stagemuse.impact.complete")}</p>}
               <ImpactGroup title={t("stagemuse.impact.unaffected")} items={impactReport.unaffected} />
             </div>
-          </section>
+          </section></div>
         )}
 
         {versions.length > 0 && (
+          <div className="execution-only">
           <section className="sm-panel">
             <div className="sm-phead">
               <h2>{t("stagemuse.status.title")}</h2>
@@ -700,13 +707,13 @@ export function Workbench() {
               {versionChanges.length > 0 && <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--sm-border)" }}><p className="mb-2 text-[11px] font-bold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.revision.diff")}</p>{versionChanges.map((change) => <button key={change.cue} className="mb-1 block w-full rounded border px-2 py-1.5 text-left text-xs" onClick={() => setSelectedCueIndex(change.cue - 1)}>{t("stagemuse.department.cue", { n: change.cue })} · {change.fields.join("、")}</button>)}</div>}
               {revisionRecords.length > 0 && <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--sm-border)" }}><p className="mb-2 text-[11px] font-bold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.revision.records")}</p>{revisionRecords.map((record) => <div key={record.id} className="sm-vitem"><b>{record.source}</b> · {record.reason}<small>{record.cueIds.join("、") || t("stagemuse.revision.noCue")}｜{record.departments.join("、") || t("stagemuse.revision.noDepartment")}</small><div className="mt-2 flex gap-1"><span className="sm-chip">{t(`stagemuse.revisionStatus.${record.status}`)}</span>{record.status !== "locked" && <button className="sm-ghost px-2 py-0.5 text-[10px]" onClick={() => lockRevisionRecord(record)}>{t("stagemuse.approval.lock")}</button>}</div></div>)}</div>}
             </div>
-          </section>
+          </section></div>
         )}
 
-        {activePlan && <DepartmentRequirements plan={activePlan} selectedCueIndex={selectedCueIndex} onSelectCue={setSelectedCueIndex} />}
+        {activePlan && <div className="execution-only"><DepartmentRequirements plan={activePlan} selectedCueIndex={selectedCueIndex} onSelectCue={setSelectedCueIndex} /></div>}
       </div>
     </div>
-  );
+  </>);
 }
 
 function toRequirementItems(requirement: StructuredRequirement): RequirementItem[] {

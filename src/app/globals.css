@@ -271,6 +271,9 @@ body {
 .sm-mtabs { display: flex; gap: 8px; margin-bottom: 10px; }
 .sm-mtabs button { flex: 1; border: 2px solid var(--sm-line); border-radius: 999px; background: var(--sm-paper); font-size: 12px; font-weight: 850; padding: 9px 0; color: var(--sm-ink); cursor: pointer; }
 .sm-mtabs button.active { background: var(--sm-red); color: var(--sm-paper); }
+.studio-view-tabs { max-width: 1460px; margin: 0 auto 12px; display: flex; gap: 8px; padding: 6px; border: 1px solid rgba(247,241,230,.18); background: #24211e; border-radius: 14px; }
+.studio-view-tabs button { flex: 1; border: 0; border-radius: 10px; background: transparent; color: #b5aa9c; padding: 8px 12px; text-align: left; font-weight: 900; cursor: pointer; }.studio-view-tabs button.active { background: #f1e9dc; color: #1c1916; }.studio-view-tabs small { display: block; margin-top: 2px; font-size: 10px; font-weight: 600; opacity: .7; }
+.workspace-split .execution-only, .workspace-split .creative-only { display: block; }.workspace-split[data-view="creative"] .execution-only { display: none; }.workspace-split[data-view="execution"] .creative-only { display: none; }
 
 /* Stage Studio shell: expressive entry, practical workspace. */
 .studio-app { min-height: 100svh; background: #11110f; color: #f7f1e6; font-family: Arial, sans-serif; }

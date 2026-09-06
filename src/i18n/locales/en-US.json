@@ -77,6 +77,7 @@
       "v2": "V2",
       "highlight": "Highlight changes"
     },
+    "views": { "label": "Workspace view", "creative": "Creative", "creativeHint": "Ideas / treatment / direction", "execution": "Execution", "executionHint": "Timeline / Cue / departments" },
     "left": {
       "title": "Requirements & Ideas"
     },

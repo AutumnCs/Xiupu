@@ -77,6 +77,7 @@
       "v2": "V2",
       "highlight": "高亮变化"
     },
+    "views": { "label": "工作视图", "creative": "创作视图", "creativeHint": "创意 / 演绎 / 方向", "execution": "执行视图", "executionHint": "时间轴 / Cue / 部门" },
     "left": {
       "title": "需求与创意"
     },
