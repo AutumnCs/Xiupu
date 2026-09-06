@@ -182,6 +182,8 @@
     },
     "cue": { "status": "执行状态", "speech": "台词 / 歌词", "props": "道具", "camera": "镜头", "notes": "执行备注", "noPrevious": "节目开始", "noNext": "节目结束" },
     "cueStatus": { "draft": "草稿", "ready": "待执行", "confirmed": "已确认", "locked": "已锁定" },
+    "revision": { "source": "导演反馈", "diff": "V1 → V2 变更摘要", "records": "正式修改记录", "noCue": "未关联 Cue", "noDepartment": "未关联部门" },
+    "revisionStatus": { "pending": "待确认", "confirmed": "已确认", "locked": "已锁定" },
     "log": {
       "v1": "初版方案生成",
       "v2": "联动修改应用",
@@ -199,6 +201,7 @@
       "noChange": "请至少勾选一项修改",
       "needInput": "请先输入节目要求",
       "needClarification": "请先补充至少一项待确认信息",
+      "lockedImpact": "此修改会影响已锁定 Cue（{{cues}}），请先解锁后再应用",
       "needPlan": "请先生成方案",
       "needFb": "请先输入导演反馈",
       "reqDone": "需求解析完成",

@@ -12,7 +12,10 @@ export type ProjectSnapshot = {
   current: "v1" | "v2";
   feedback: string;
   approvalStatus?: ProjectApprovalStatus;
+  revisionRecords?: RevisionRecord[];
 };
+
+export type RevisionRecord = { id: string; source: string; reason: string; cueIds: string[]; departments: string[]; status: "pending" | "confirmed" | "locked"; createdAt: string };
 
 export type ProjectListItem = { id: string; title: string; share_token: string; updated_at: string };
 export type VersionListItem = { id: string; version: number; summary: string; created_at: string };

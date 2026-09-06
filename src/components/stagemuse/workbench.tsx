@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
 import { stageMuseApi } from "@/lib/api/stagemuse";
-import { listProjectVersions, listProjects, loadProjectShare, loadProjectVersion, saveProject, type ProjectListItem, type ProjectSnapshot, type VersionListItem } from "@/lib/api/projects";
+import { listProjectVersions, listProjects, loadProjectShare, loadProjectVersion, saveProject, type ProjectListItem, type ProjectSnapshot, type RevisionRecord, type VersionListItem } from "@/lib/api/projects";
 import { FormationSvg } from "./formation-svg";
 import { CueTimeline } from "./cue-timeline";
 import { PerformanceEditor } from "./performance-editor";
@@ -17,6 +17,7 @@ import { buildProjectBrief } from "@/lib/project-state/project-brief";
 import { mergeClarificationsIntoBrief } from "@/lib/project-state/clarifications";
 import { canEditProject, toProjectSource, type ProjectApprovalStatus } from "@/lib/project-state/project-governance";
 import { updateCueStatus, type CueStatus } from "@/lib/project-state/cue-core";
+import { hasLockedAffectedCue, summarizePlanChanges } from "@/lib/project-state/revision-log";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -70,6 +71,7 @@ export function Workbench() {
   const [savedProjects, setSavedProjects] = useState<ProjectListItem[]>([]);
   const [databaseVersions, setDatabaseVersions] = useState<VersionListItem[]>([]);
   const [approvalStatus, setApprovalStatus] = useState<ProjectApprovalStatus>("draft");
+  const [revisionRecords, setRevisionRecords] = useState<RevisionRecord[]>([]);
 
   function restoreSnapshot(snapshot: ProjectSnapshot, metadata?: { id?: string; shareToken?: string; shareUrl?: string }) {
     if (metadata?.id) setProjectId(metadata.id);
@@ -87,6 +89,7 @@ export function Workbench() {
     setCurrent(snapshot.current);
     setFeedback(snapshot.feedback);
     setApprovalStatus(snapshot.approvalStatus || "draft");
+    setRevisionRecords(snapshot.revisionRecords || []);
     setImpactReport(null);
     setSkippedImpactIds(new Set());
     setConfirmedImpactTitles([]);
@@ -152,7 +155,7 @@ export function Workbench() {
     if (!v1) return toast.error(t("stagemuse.toast.needPlan"));
     setLoading("save");
     try {
-      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback, approvalStatus };
+      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback, approvalStatus, revisionRecords };
       const saved = await saveProject(snapshot, projectId, shareToken);
       setProjectId(saved.id);
       setShareToken(saved.shareToken);
@@ -330,10 +333,13 @@ export function Workbench() {
   // ---- 节点 6：逐项确认 → 生成 V2 → 重新分析剩余影响 ----
   async function onApply(impact: ImpactItem) {
     if (!activePlan || !activePerformance) return;
+    const locked = hasLockedAffectedCue(activePlan, impact.cueIds);
+    if (locked.length) return toast.error(t("stagemuse.toast.lockedImpact", { cues: locked.join("、") }));
     setLoading("revision");
     try {
       const r = await stageMuseApi.generateRevision(feedback, activePerformance, activePlan, [impact]);
       const nextConfirmedTitles = [...confirmedImpactTitles, impact.title];
+      setRevisionRecords((records) => [{ id: impact.id, source: t("stagemuse.revision.source"), reason: feedback, cueIds: impact.cueIds, departments: impact.departments, status: "confirmed", createdAt: new Date().toISOString() }, ...records]);
       setPerformanceV2(r.data.performance); setV2(r.data.plan); setCurrent("v2"); addVersion("v2", `${t("stagemuse.log.v2")}（1）`); runValidate(r.data.plan);
       const reassessed = await stageMuseApi.analyzeFeedback(feedback, r.data.performance, r.data.plan, nextConfirmedTitles);
       setConfirmedImpactTitles(nextConfirmedTitles);
@@ -360,6 +366,14 @@ export function Workbench() {
     if (current === "v2") setV2(next); else setV1(next);
   }
 
+  function lockRevisionRecord(record: RevisionRecord) {
+    setRevisionRecords((records) => records.map((item) => item.id === record.id ? { ...item, status: "locked" } : item));
+    const target = current === "v2" ? v2 : v1;
+    if (!target) return;
+    const lockedPlan = { ...target, rows: target.rows.map((row) => row.id && record.cueIds.includes(row.id) ? { ...row, status: "locked" as const } : row) };
+    if (current === "v2") setV2(lockedPlan); else setV1(lockedPlan);
+  }
+
   const cellChanged = (base: PlanRow, row: PlanRow, col: string): boolean => {
     if (col === "formation")
       return base.people !== row.people || base.formationNote !== row.formationNote || base.lead !== row.lead;
@@ -368,6 +382,7 @@ export function Workbench() {
   };
 
   const diffOn = showDiff && current === "v2" && !!v2 && !!v1;
+  const versionChanges = v1 && v2 ? summarizePlanChanges(v1, v2) : [];
 
   return (
     <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[300px_1fr_320px]">
@@ -682,6 +697,8 @@ export function Workbench() {
                   }}><span><b>V{v.version}</b> · {v.summary}</span><small style={{ color: "var(--sm-muted)" }}>{new Date(v.created_at).toLocaleString("zh-CN")}</small></button>)}
                 </div>
               </div>}
+              {versionChanges.length > 0 && <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--sm-border)" }}><p className="mb-2 text-[11px] font-bold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.revision.diff")}</p>{versionChanges.map((change) => <button key={change.cue} className="mb-1 block w-full rounded border px-2 py-1.5 text-left text-xs" onClick={() => setSelectedCueIndex(change.cue - 1)}>{t("stagemuse.department.cue", { n: change.cue })} · {change.fields.join("、")}</button>)}</div>}
+              {revisionRecords.length > 0 && <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--sm-border)" }}><p className="mb-2 text-[11px] font-bold" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.revision.records")}</p>{revisionRecords.map((record) => <div key={record.id} className="sm-vitem"><b>{record.source}</b> · {record.reason}<small>{record.cueIds.join("、") || t("stagemuse.revision.noCue")}｜{record.departments.join("、") || t("stagemuse.revision.noDepartment")}</small><div className="mt-2 flex gap-1"><span className="sm-chip">{t(`stagemuse.revisionStatus.${record.status}`)}</span>{record.status !== "locked" && <button className="sm-ghost px-2 py-0.5 text-[10px]" onClick={() => lockRevisionRecord(record)}>{t("stagemuse.approval.lock")}</button>}</div></div>)}</div>}
             </div>
           </section>
         )}

@@ -182,6 +182,8 @@
     },
     "cue": { "status": "Execution status", "speech": "Speech / lyrics", "props": "Props", "camera": "Camera", "notes": "Execution notes", "noPrevious": "Show start", "noNext": "Show end" },
     "cueStatus": { "draft": "Draft", "ready": "Ready", "confirmed": "Confirmed", "locked": "Locked" },
+    "revision": { "source": "Director feedback", "diff": "V1 → V2 change summary", "records": "Revision records", "noCue": "No linked Cue", "noDepartment": "No linked department" },
+    "revisionStatus": { "pending": "Pending", "confirmed": "Confirmed", "locked": "Locked" },
     "log": {
       "v1": "Initial plan generated",
       "v2": "Linked changes applied",
@@ -199,6 +201,7 @@
       "noChange": "Please check at least one change",
       "needInput": "Please enter the show brief first",
       "needClarification": "Please answer at least one pending question first",
+      "lockedImpact": "This change affects locked Cue(s) ({{cues}}). Unlock them before applying.",
       "needPlan": "Please generate a plan first",
       "needFb": "Please enter director feedback first",
       "reqDone": "Requirements parsed",
