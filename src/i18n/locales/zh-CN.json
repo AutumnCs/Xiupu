@@ -180,6 +180,8 @@
       "visual": "视觉",
       "lighting": "灯光"
     },
+    "cue": { "status": "执行状态", "speech": "台词 / 歌词", "props": "道具", "camera": "镜头", "notes": "执行备注", "noPrevious": "节目开始", "noNext": "节目结束" },
+    "cueStatus": { "draft": "草稿", "ready": "待执行", "confirmed": "已确认", "locked": "已锁定" },
     "log": {
       "v1": "初版方案生成",
       "v2": "联动修改应用",

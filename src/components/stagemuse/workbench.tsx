@@ -16,6 +16,7 @@ import { getNextImpact } from "@/lib/project-state/impact-queue";
 import { buildProjectBrief } from "@/lib/project-state/project-brief";
 import { mergeClarificationsIntoBrief } from "@/lib/project-state/clarifications";
 import { canEditProject, toProjectSource, type ProjectApprovalStatus } from "@/lib/project-state/project-governance";
+import { updateCueStatus, type CueStatus } from "@/lib/project-state/cue-core";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -343,12 +344,20 @@ export function Workbench() {
   }
 
   function editCell(rowIdx: number, col: EditableCueField, value: string) {
+    if (!editable) return;
     const target = current === "v2" ? v2 : v1;
-    if (!target) return;
+    if (!target || target.rows[rowIdx]?.status === "locked") return;
     const next = updatePlanRow(target, rowIdx, col, value);
     if (current === "v2") setV2(next);
     else setV1(next);
     runValidate(next);
+  }
+
+  function setCueStatus(rowIdx: number, status: CueStatus) {
+    const target = current === "v2" ? v2 : v1;
+    if (!target || !editable) return;
+    const next = updateCueStatus(target, rowIdx, status);
+    if (current === "v2") setV2(next); else setV1(next);
   }
 
   const cellChanged = (base: PlanRow, row: PlanRow, col: string): boolean => {
@@ -491,7 +500,7 @@ export function Workbench() {
       <div className="grid content-start gap-2.5">
         {activePerformance && <PerformanceEditor performance={activePerformance} readOnly={current === "v2" || !editable} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} />}
         {performanceV1 && !v1 && <button className="sm-solid w-full" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
-        {activePlan && <CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} />}
+        {activePlan && <CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} editable={editable} onStatusChange={setCueStatus} />}
         <section className="sm-panel">
           <div className="sm-phead">
             <div>
@@ -571,7 +580,7 @@ export function Workbench() {
                             <td
                               key={c}
                               className={changed ? "chg" : ""}
-                              contentEditable={editable}
+                              contentEditable={editable && row.status !== "locked"}
                               suppressContentEditableWarning
                               onBlur={(e) => editCell(ri, c, e.currentTarget.textContent ?? "")}
                             >

@@ -68,6 +68,7 @@ export interface PlanRow {
   props: string;
   camera?: string;
   notes?: string;
+  status?: "draft" | "ready" | "confirmed" | "locked";
 }
 
 export interface PlanSnapshot {

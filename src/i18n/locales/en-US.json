@@ -180,6 +180,8 @@
       "visual": "Visual",
       "lighting": "Lighting"
     },
+    "cue": { "status": "Execution status", "speech": "Speech / lyrics", "props": "Props", "camera": "Camera", "notes": "Execution notes", "noPrevious": "Show start", "noNext": "Show end" },
+    "cueStatus": { "draft": "Draft", "ready": "Ready", "confirmed": "Confirmed", "locked": "Locked" },
     "log": {
       "v1": "Initial plan generated",
       "v2": "Linked changes applied",
