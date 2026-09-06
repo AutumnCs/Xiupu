@@ -1,26 +1,89 @@
 # 秀谱 XiuPu
 
-秀演创作工作台。本地体验版提供需求解析、创意方向、方案 cue 表、反馈改稿和版本对比。
+秀谱是面向舞台创作者的 AI 演出策划工作台，帮助导演、秀导和各执行部门把一段自然语言需求逐步整理为可讨论、可修改、可执行的舞台方案。
 
-## 本地运行
+项目当前以单节目 Demo 为核心，重点验证从创意到执行的协作闭环。
 
-```bash
-bun install
-Copy-Item .env.example .env
-bun run dev
+## 产品定位
+
+秀谱不替代导演做最终判断，而是把创作过程中的信息整理、方案拆解和变更同步变得更清晰：
+
+- 将项目资料、导演要求、演员信息和舞台条件整理为结构化需求；
+- 从需求生成创意方向和完整演绎形式；
+- 将演绎形式拆解为节目段落、Cue 和部门执行要求；
+- 记录导演反馈，标记受影响的 Cue 与部门；
+- 通过 V1 / V2 版本记录，追踪每次修改的来源、原因和影响范围。
+
+## 核心工作流
+
+```text
+项目资料
+  → 结构化需求
+  → 创意方向
+  → 演绎形式
+  → 节目 Cue
+  → 部门需求
+  → 导演反馈
+  → V2 方案与影响同步
 ```
 
-在 `.env` 中填入任意 OpenAI 兼容服务的 `AI_PROVIDER_BASE_URL`、`AI_PROVIDER_API_KEY` 和 `AI_PROVIDER_MODEL`，然后打开 [http://localhost:3000](http://localhost:3000)。密钥只在服务端 API 路由中使用。
+工作台分为两个视图：
 
-当前 Demo 默认仍使用 HTTP-only 访客 Cookie；配置 Supabase 并执行 `supabase/migrations/20260906023000_projects.sql` 后，可以在版本记录区保存项目并生成分享链接。Supabase 的正式登录与文件存储留在后续阶段。
+- **创作视图**：项目输入、创意方向、演绎形式和视觉方向；
+- **执行视图**：时间轴、Cue、演员调度、LED、灯光和部门需求。
 
-Supabase 项目配置：在 Vercel 中设置 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 和服务端专用的 `SUPABASE_SERVICE_ROLE_KEY`。不要把 service role key 放进浏览器或提交到 Git。
+Cue 是创作与执行之间的核心对象。每个 Cue 都可以独立编辑、确认或锁定，相关修改会同步到时间轴、部门需求和版本记录。
 
-## 验证与部署
+## 当前能力
 
-```bash
-bun run lint
-bun run build
+- 支持自然语言输入和 TXT / Markdown 资料导入；
+- 支持需求的结构化解析与缺失信息提示；
+- 支持创意方向、演绎形式和整节目 Cue 生成；
+- 支持 Cue 的时间、音乐、台词、调度、视觉、灯光、道具等字段编辑；
+- 支持部门需求自动汇总；
+- 支持单项确认、锁定、反馈影响分析和 V1 / V2 对比；
+- 支持项目列表、版本历史和分享链接；
+- 支持中文与英文界面。
+
+## 技术结构
+
+- **前端**：Next.js App Router、React、TypeScript、Tailwind CSS、shadcn/ui；
+- **服务端**：Next.js Route Handlers；
+- **数据层**：Drizzle ORM、PostgreSQL、Supabase；
+- **AI 服务**：服务端调用 OpenAI 兼容接口，统一由 Agent API 编排；
+- **校验与测试**：Zod、Vitest、ESLint。
+
+项目将业务逻辑集中在 API、Agent 类型和项目状态模块中，界面层负责编辑和呈现，便于后续接入更细分的 Agent、知识库和协作能力。
+
+## 项目结构
+
+```text
+src/app/              页面、布局与 API 路由
+src/components/       工作台、时间轴、Cue 与通用 UI
+src/lib/agents/        AI Agent 类型与编排逻辑
+src/lib/project-state/项目状态、Cue 和版本变更逻辑
+src/lib/api/           前后端 API 客户端与数据类型
+src/lib/db/            Drizzle 数据库 schema 与查询
+supabase/              数据库迁移
+docs/                  产品与开发说明
 ```
 
-可部署到任意支持 Next.js 的主机；部署环境同样配置上述三个 AI 环境变量。
+## 项目阶段
+
+当前版本聚焦单节目闭环和可编辑性，适合产品演示与早期体验。以下方向暂未作为本阶段的前置依赖：
+
+- 多节目项目管理；
+- 正式账户体系与团队权限；
+- 多 Agent 自主协作；
+- 舞美视觉生成与素材资产管理；
+- 更精确的音乐 Timecode 与现场控制系统。
+
+这些能力会在核心数据模型和修改—确认—版本工作流稳定后逐步接入。
+
+## 参与项目
+
+欢迎从产品流程、舞台行业知识、交互设计和工程实现等角度提出 Issue 或提交 Pull Request。提交改动时，请尽量说明：
+
+1. 解决的具体场景；
+2. 对需求、Cue、部门需求或版本记录的影响；
+3. 是否需要同步更新数据结构、接口或文档。
