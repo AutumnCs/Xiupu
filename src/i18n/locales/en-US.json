@@ -195,7 +195,11 @@
       "lighting": "Lighting",
       "constraints": "Constraints & preserved",
       "prompt": "Visual prompt",
-      "uncertainty": "Needs confirmation"
+      "uncertainty": "Needs confirmation",
+      "apply": "Apply to treatment & Cues",
+      "applyAfterPerformance": "Generate the treatment first",
+      "applied": "Visual direction synced to {{affected}} Cues",
+      "appliedWithSkipped": "Synced {{affected}} Cues; skipped {{skipped}} confirmed/locked Cues"
     },
     "timeline": {
       "title": "Cue Timeline",

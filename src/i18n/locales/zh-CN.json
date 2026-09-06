@@ -195,7 +195,11 @@
       "lighting": "灯光",
       "constraints": "约束与保留",
       "prompt": "视觉提示词",
-      "uncertainty": "需要确认"
+      "uncertainty": "需要确认",
+      "apply": "应用到演绎形式与 Cue",
+      "applyAfterPerformance": "请先生成演绎形式",
+      "applied": "视觉方向已同步到 {{affected}} 个 Cue",
+      "appliedWithSkipped": "已同步 {{affected}} 个 Cue，{{skipped}} 个已确认/锁定 Cue 未覆盖"
     },
     "timeline": {
       "title": "Cue 时间带",

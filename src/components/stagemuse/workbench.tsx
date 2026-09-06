@@ -19,6 +19,7 @@ import { mergeClarificationsIntoBrief } from "@/lib/project-state/clarifications
 import { canEditProject, toProjectSource, type ProjectApprovalStatus } from "@/lib/project-state/project-governance";
 import { updateCueStatus, type CueStatus } from "@/lib/project-state/cue-core";
 import { hasLockedAffectedCue, summarizePlanChanges } from "@/lib/project-state/revision-log";
+import { applyVisualReferenceLinkage } from "@/lib/project-state/visual-linkage";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -368,6 +369,21 @@ export function Workbench() {
     if (current === "v2") setV2(next); else setV1(next);
   }
 
+  function onApplyVisualReference(analysis: import("@/lib/agents/types").VisualReferenceAnalysis) {
+    if (!activePerformance) return toast.error(t("stagemuse.visual.applyAfterPerformance"));
+    const linked = applyVisualReferenceLinkage(activePerformance, activePlan ?? { segmentLabel: "节目", columns: [], rows: [] }, analysis);
+    if (current === "v2") setPerformanceV2(linked.performance); else setPerformanceV1(linked.performance);
+    if (activePlan) {
+      if (current === "v2") setV2(linked.plan); else setV1(linked.plan);
+      runValidate(linked.plan);
+    }
+    if (linked.skippedCueIds.length) {
+      toast.message(t("stagemuse.visual.appliedWithSkipped", { affected: linked.affectedCueIds.length, skipped: linked.skippedCueIds.length }));
+    } else {
+      toast.success(t("stagemuse.visual.applied", { affected: linked.affectedCueIds.length }));
+    }
+  }
+
   function lockRevisionRecord(record: RevisionRecord) {
     setRevisionRecords((records) => records.map((item) => item.id === record.id ? { ...item, status: "locked" } : item));
     const target = current === "v2" ? v2 : v1;
@@ -515,7 +531,7 @@ export function Workbench() {
             </div>
           </section>
         )}
-        <div className="creative-only"><VisualReferencePanel project={project} direction={directions?.find((item) => item.id === selectedDir)} editable={editable} /></div>
+        <div className="creative-only"><VisualReferencePanel project={project} direction={directions?.find((item) => item.id === selectedDir)} editable={editable} canApply={!!activePerformance} onApply={onApplyVisualReference} /></div>
       </div>
 
       {/* ============ CENTER ============ */}
