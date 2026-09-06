@@ -274,6 +274,16 @@ body {
 .studio-view-tabs { max-width: 1460px; margin: 0 auto 12px; display: flex; gap: 8px; padding: 6px; border: 1px solid rgba(247,241,230,.18); background: #24211e; border-radius: 14px; }
 .studio-view-tabs button { flex: 1; border: 0; border-radius: 10px; background: transparent; color: #b5aa9c; padding: 8px 12px; text-align: left; font-weight: 900; cursor: pointer; }.studio-view-tabs button.active { background: #f1e9dc; color: #1c1916; }.studio-view-tabs small { display: block; margin-top: 2px; font-size: 10px; font-weight: 600; opacity: .7; }
 .workspace-split .execution-only, .workspace-split .creative-only { display: block; }.workspace-split[data-view="creative"] .execution-only { display: none; }.workspace-split[data-view="execution"] .creative-only { display: none; }
+.workspace-split { display: block !important; max-width: 1180px; margin: 0 auto; }
+.workspace-split > div { display: contents; }
+.workspace-split > div > * { margin-bottom: 14px; }
+.studio-workspace .sm-panel, .studio-workspace .sm-panel button, .studio-workspace .sm-panel label, .studio-workspace .sm-panel p, .studio-workspace .sm-panel span, .studio-workspace .sm-panel strong, .studio-workspace .sm-panel b { color: var(--sm-ink); }
+.studio-workspace .sm-panel .sm-phead h2, .studio-workspace .sm-panel .sm-lab { color: var(--sm-ink); }
+.studio-workspace .sm-panel .sm-lab { color: var(--sm-muted); }
+.studio-workspace .sm-panel input, .studio-workspace .sm-panel textarea, .studio-workspace .sm-panel select { color: var(--sm-ink); }
+.studio-workspace .sm-panel input::placeholder, .studio-workspace .sm-panel textarea::placeholder { color: #756d60; opacity: 1; }
+.studio-workspace .sm-panel .sm-chip.red, .studio-workspace .sm-panel .sm-chip.green, .studio-workspace .sm-panel .sm-solid, .studio-workspace .sm-panel .sm-sev.err, .studio-workspace .sm-panel .sm-sev.info { color: var(--sm-paper); }
+.studio-workspace .sm-panel .sm-pill.active { color: var(--sm-paper); }
 
 /* Stage Studio shell: expressive entry, practical workspace. */
 .studio-app { min-height: 100svh; background: #11110f; color: #f7f1e6; font-family: Arial, sans-serif; }
