@@ -14,6 +14,7 @@ import { ProjectIntelligencePanel } from "./project-intelligence-panel";
 import { ProgramListEditor } from "./program-list-editor";
 import { CueImporter } from "./cue-importer";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
+import { buildDepartmentCueSheet } from "@/lib/project-state/department-export";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
 import { getNextImpact } from "@/lib/project-state/impact-queue";
@@ -815,7 +816,7 @@ export function Workbench() {
           </section></div>
         )}
 
-        {activePlan && <div className="execution-only"><DepartmentRequirements plan={activePlan} selectedCueIndex={selectedCueIndex} onSelectCue={setSelectedCueIndex} /></div>}
+        {activePlan && <div className="execution-only"><DepartmentRequirements plan={activePlan} projectName={project.projectName} versionName={current.toUpperCase()} selectedCueIndex={selectedCueIndex} onSelectCue={setSelectedCueIndex} /></div>}
       </div>
     </div>
   </>);
@@ -888,16 +889,24 @@ function IssueItem({ issue, onSelectCue }: { issue: ValidationIssue; onSelectCue
 
 const DEPARTMENT_FIELDS = ["music", "visual", "lighting", "performer", "props"] as const;
 
-function DepartmentRequirements({ plan, selectedCueIndex, onSelectCue }: { plan: PlanSnapshot; selectedCueIndex: number | null; onSelectCue: (index: number) => void }) {
+function DepartmentRequirements({ plan, projectName, versionName, selectedCueIndex, onSelectCue }: { plan: PlanSnapshot; projectName: string; versionName: string; selectedCueIndex: number | null; onSelectCue: (index: number) => void }) {
   const { t } = useTranslation();
   const [department, setDepartment] = useState<(typeof DEPARTMENT_FIELDS)[number]>("music");
   const fieldFor = (row: PlanRow, key: (typeof DEPARTMENT_FIELDS)[number]) => key === "performer" ? row.formationNote : row[key];
   const requirements = plan.rows.map((row, cueIndex) => ({ cueIndex, time: row.time, content: fieldFor(row, department) })).filter((item) => item.content && item.content !== "无");
-  const exportText = [
-    `# ${t(`stagemuse.department.${department}`)} · Cue 清单`,
-    "",
-    ...requirements.map((item) => `## ${t("stagemuse.department.cue", { n: item.cueIndex + 1 })} · ${item.time}\n${item.content}`),
-  ].join("\n\n");
+  const exportText = buildDepartmentCueSheet({
+    projectName,
+    departmentName: t(`stagemuse.department.${department}`),
+    versionName,
+    entries: requirements.map((item) => ({
+      cue: item.cueIndex + 1,
+      time: item.time,
+      program: plan.rows[item.cueIndex].programTitle,
+      chapter: plan.rows[item.cueIndex].chapter,
+      status: t(`stagemuse.cueStatus.${plan.rows[item.cueIndex].status || "draft"}`),
+      content: item.content,
+    })),
+  });
   const copyRequirements = async () => { try { await navigator.clipboard.writeText(exportText); toast.success(t("stagemuse.department.copied")); } catch { toast.error(t("stagemuse.department.copyFailed")); } };
   const downloadRequirements = () => { const url = URL.createObjectURL(new Blob([exportText], { type: "text/markdown;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = `${t(`stagemuse.department.${department}`)}-cue.md`; link.click(); URL.revokeObjectURL(url); toast.success(t("stagemuse.department.downloaded")); };
   return (
