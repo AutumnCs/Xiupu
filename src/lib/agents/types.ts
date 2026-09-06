@@ -22,6 +22,21 @@ export interface ProjectBrief {
   creativeIntent: string;
   supportingMaterials?: string;
   creatorProfile?: CreatorProfile;
+  programs?: Program[];
+}
+
+/** 项目内的独立节目；本阶段嵌入项目快照，后续可提升为独立持久化对象。 */
+export interface Program {
+  id: string;
+  title: string;
+  type: string;
+  chapter: string;
+  notes: string;
+  performers?: string;
+  entry?: string;
+  exit?: string;
+  staysOnStage?: boolean;
+  props?: string;
 }
 
 /** 创作者的显式偏好：仅作为建议上下文，不能覆盖项目硬约束。 */
@@ -88,6 +103,9 @@ export interface PerformanceDraft {
 export interface PlanRow {
   id?: string;
   sectionId?: string;
+  programId?: string;
+  programTitle?: string;
+  chapter?: string;
   durationSeconds?: number;
   time: string;
   music: string;

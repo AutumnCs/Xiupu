@@ -105,6 +105,7 @@
       "generating": "Generating…"
     },
     "project": { "box": "Project materials · used by every generation", "name": "Project name (optional; it can be inferred)", "director": "Director / client requirements: constraints and non-negotiables", "program": "Program material: content, duration, order, and more", "performers": "Cast: count, roles, and constraints", "stage": "Stage conditions: LED, entrances, constraints", "creative": "My creative intent: arc, visual mood, key images, transitions" },
+    "program": { "title": "Program structure", "hint": "Each program can be linked independently to Cues, chapters, and change impact. Recognize it from source material, then refine manually.", "recognize": "Recognize from program material", "add": "Add program", "name": "Program name", "type": "Format / type", "chapter": "Chapter", "notes": "Traits, entrances/exits, or special requirements" },
     "approval": { "draft": "Pending", "confirmed": "Confirmed", "locked": "Locked", "confirm": "Confirm", "lock": "Lock", "unlock": "Unlock" },
     "dir": {
       "title": "Creative Directions",
@@ -130,6 +131,7 @@
     },
     "performance": { "title": "Performance Treatment", "generate": "Generate full performance treatment", "loading": "Generating treatment…", "done": "Treatment generated. Review and edit it.", "generateCue": "Confirm treatment and generate full Cue sheet" },
     "col": {
+      "program": "Program / chapter",
       "time": "Timecode",
       "music": "Music / Cue",
       "speech": "Lyrics / Lines",
@@ -201,6 +203,7 @@
       "applied": "Visual direction synced to {{affected}} Cues",
       "appliedWithSkipped": "Synced {{affected}} Cues; skipped {{skipped}} confirmed/locked Cues"
     },
+    "cueImport": { "title": "Import Cue table", "hint": "Paste a Markdown table or a tab-separated table copied from Feishu/Excel. Time, music, cast/blocking, visual, lighting and props become editable Cues.", "placeholder": "Time\tMusic\tCast / blocking\tVisual\tLighting\tProps\n00:00–00:20\tMartial arts music starts\tMartial artists enter from upstage\tGrowing lines extend\tCentre spot opens\tStaff", "import": "Import and replace current Cues", "done": "Imported {{count}} Cues", "failed": "No valid Cue table found. Include a Time column.", "version": "Cue table imported" },
     "intelligence": {
       "title": "Project Intelligence Context",
       "knowledge": "Project knowledge",

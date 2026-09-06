@@ -11,6 +11,8 @@ import { CueTimeline } from "./cue-timeline";
 import { PerformanceEditor } from "./performance-editor";
 import { VisualReferencePanel } from "./visual-reference-panel";
 import { ProjectIntelligencePanel } from "./project-intelligence-panel";
+import { ProgramListEditor } from "./program-list-editor";
+import { CueImporter } from "./cue-importer";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
@@ -39,7 +41,7 @@ import type {
 const CASE_BRIEF =
   "3分钟科技品牌开场秀，主题「从个体到共生」；12名舞者（含1名领舞）；主LED屏，左右两个出入口；情绪从克制到连接再到爆发；结尾需体现品牌力量感。";
 const FEEDBACK_EXAMPLE = "人数改成8人；最后30秒更有力量感；不使用手持道具。";
-const COLS = ["time", "music", "speech", "formation", "visual", "lighting", "props", "camera", "notes"] as const;
+const COLS = ["program", "time", "music", "speech", "formation", "visual", "lighting", "props", "camera", "notes"] as const;
 
 type VersionEntry = { ver: string; summary: string; time: string };
 
@@ -220,6 +222,10 @@ export function Workbench() {
 
   function updateProjectField(field: keyof ProjectBrief, value: string) {
     setProject((current) => ({ ...current, [field]: value }));
+  }
+
+  function updatePrograms(programs: NonNullable<ProjectBrief["programs"]>) {
+    setProject((current) => ({ ...current, programs }));
   }
 
   function updateCreatorProfile(profile: CreatorProfile) {
@@ -448,6 +454,16 @@ export function Workbench() {
     }
   }
 
+  function onImportCuePlan(plan: PlanSnapshot) {
+    setV1(plan);
+    setV2(null);
+    setCurrent("v1");
+    setImpactReport(null);
+    setSelectedCueIndex(0);
+    addVersion("v1", t("stagemuse.cueImport.version"));
+    runValidate(plan);
+  }
+
   function lockRevisionRecord(record: RevisionRecord) {
     setRevisionRecords((records) => records.map((item) => item.id === record.id ? { ...item, status: "locked" } : item));
     const target = current === "v2" ? v2 : v1;
@@ -554,6 +570,8 @@ export function Workbench() {
           )}
         </section>
 
+        <ProgramListEditor material={project.programMaterial || brief} programs={project.programs || []} editable={editable} onChange={updatePrograms} />
+
         <ProjectIntelligencePanel project={project} requirement={requirement} plan={activePlan} runs={agentRuns} editable={editable} onProfileChange={updateCreatorProfile} />
 
         {directions && (
@@ -604,6 +622,7 @@ export function Workbench() {
       <div className="grid content-start gap-2.5">
         {activePerformance && <div className="creative-only"><PerformanceEditor performance={activePerformance} readOnly={current === "v2" || !editable} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} /></div>}
         {performanceV1 && !v1 && <button className="sm-solid w-full creative-only" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
+        <CueImporter programs={project.programs || []} editable={editable} onImport={onImportCuePlan} />
         {activePlan && <div className="execution-only"><CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} editable={editable} onStatusChange={setCueStatus} /></div>}
         <section className="sm-panel execution-only">
           <div className="sm-phead">
@@ -674,6 +693,8 @@ export function Workbench() {
                                 {row.time}
                               </td>
                             );
+                          if (c === "program")
+                            return <td key={c} className={changed ? "chg" : ""}>{row.programTitle || row.chapter || "—"}</td>;
                           if (c === "formation")
                             return (
                               <td key={c} className={changed ? "chg" : ""}>

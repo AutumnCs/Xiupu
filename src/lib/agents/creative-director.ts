@@ -31,7 +31,7 @@ export async function generateDirections(input: {
   try {
     const { data, raw } = await runAgentJSON<{ directions: CreativeDirection[] }>({
       system: SYSTEM,
-      user: `结构化需求：\n${reqText}\n\n项目上下文：${input.project ? JSON.stringify({ projectName: input.project.projectName, programMaterial: input.project.programMaterial, stageConditions: input.project.stageConditions, creativeIntent: input.project.creativeIntent, supportingMaterials: input.project.supportingMaterials, creatorProfile: input.project.creatorProfile }) : "未提供"}`,
+      user: `结构化需求：\n${reqText}\n\n项目上下文：${input.project ? JSON.stringify({ projectName: input.project.projectName, programMaterial: input.project.programMaterial, programs: input.project.programs, stageConditions: input.project.stageConditions, creativeIntent: input.project.creativeIntent, supportingMaterials: input.project.supportingMaterials, creatorProfile: input.project.creatorProfile }) : "未提供"}`,
       viewerUserId: input.viewerUserId,
     });
     const directions = Array.isArray(data.directions) ? data.directions : [];

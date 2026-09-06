@@ -17,7 +17,8 @@ function compact(value: string, limit = 92): string {
 
 export function buildProjectKnowledge(project: ProjectBrief, requirement: StructuredRequirement | null, plan: PlanSnapshot | null): ProjectKnowledgeEntry[] {
   const entries: ProjectKnowledgeEntry[] = [];
-  const projectSummary = [project.projectName, project.programMaterial, project.stageConditions].filter(Boolean).join("｜");
+  const programSummary = (project.programs || []).map((program) => [program.chapter, program.title, program.type].filter(Boolean).join("·")).join("；");
+  const projectSummary = [project.projectName, programSummary, project.programMaterial, project.stageConditions].filter(Boolean).join("｜");
   if (projectSummary.trim()) entries.push({ id: "project", kind: "project", title: "项目基础资料", summary: compact(projectSummary), scope: "all" });
   if (project.supportingMaterials?.trim()) entries.push({ id: "materials", kind: "materials", title: "项目资料箱", summary: compact(project.supportingMaterials), scope: "all" });
   if (requirement?.fixed.length) entries.push({ id: "fixed", kind: "fixed-requirements", title: "已确认约束", summary: compact(requirement.fixed.join("；")), scope: "all" });

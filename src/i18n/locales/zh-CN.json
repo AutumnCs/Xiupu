@@ -105,6 +105,7 @@
       "generating": "生成中…"
     },
     "project": { "box": "项目资料箱 · 所有生成共用这些资料", "name": "项目名称（可选，系统也会自动识别）", "director": "导演 / 甲方要求（硬约束、品牌限制、不可修改项）", "program": "节目资料（节目内容、时长、顺序等）", "performers": "演员信息（人数、角色、限制等）", "stage": "舞台条件（LED、出入口、限制等）", "creative": "我的创意（情绪曲线、审美方向、重点画面、转场想法）" },
+    "program": { "title": "节目结构", "hint": "每个节目会成为可独立关联 Cue、篇章和修改影响的对象。可从节目资料中识别后再人工调整。", "recognize": "从节目资料识别", "add": "添加节目", "name": "节目名称", "type": "形式 / 类型", "chapter": "所属篇章", "notes": "节目特点、上下场或特殊要求" },
     "approval": { "draft": "待确认", "confirmed": "已确认", "locked": "已锁定", "confirm": "确认", "lock": "锁定", "unlock": "解锁" },
     "dir": {
       "title": "创意方向",
@@ -130,6 +131,7 @@
     },
     "performance": { "title": "演绎形式", "generate": "生成完整演绎形式", "loading": "正在生成演绎形式…", "done": "演绎形式已生成，可编辑确认", "generateCue": "确认演绎形式并生成全节目 Cue" },
     "col": {
+      "program": "节目 / 篇章",
       "time": "节目时间码",
       "music": "音乐/段落",
       "speech": "歌词/台词",
@@ -201,6 +203,7 @@
       "applied": "视觉方向已同步到 {{affected}} 个 Cue",
       "appliedWithSkipped": "已同步 {{affected}} 个 Cue，{{skipped}} 个已确认/锁定 Cue 未覆盖"
     },
+    "cueImport": { "title": "导入 Cue 表", "hint": "可直接粘贴 Markdown 表格，或从飞书/Excel 复制带制表符的表格。时间、音乐、演员/调度、视觉、灯光、道具会转为可编辑 Cue。", "placeholder": "时间\t音乐\t演员 / 调度\t视觉\t灯光\t道具\n00:00–00:20\t武术音乐起\t武术演员后区进入\t生长线条延伸\t中央定点光\t棍", "import": "导入并替换当前 Cue", "done": "已导入 {{count}} 条 Cue", "failed": "未识别到有效 Cue 表，请确认包含“时间”列", "version": "从表格导入 Cue" },
     "intelligence": {
       "title": "项目智能上下文",
       "knowledge": "项目知识",
