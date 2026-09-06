@@ -277,6 +277,34 @@ body {
 .workspace-split { display: block !important; max-width: 1180px; margin: 0 auto; }
 .workspace-split > div { display: contents; }
 .workspace-split > div > * { margin-bottom: 14px; }
+.studio-app { min-height: 100svh; background: #d8e0dc; color: #182126; font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; }
+.studio-header { position: relative; z-index: 2; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid rgba(54, 71, 70, .18); background: rgba(245, 247, 243, .72); backdrop-filter: blur(18px); }
+.studio-wordmark { border: 0; background: none; color: #182126; font: 500 30px/1 "Songti SC", "STSong", Georgia, serif; letter-spacing: .04em; cursor: pointer; }
+.studio-caption { color: #71807d; font: 700 10px/1 var(--sm-mono); letter-spacing: .18em; }
+.studio-tools { display: flex; align-items: center; gap: 8px; }
+.studio-workspace { position: relative; isolation: isolate; min-height: calc(100svh - 72px); padding: 20px 24px 34px; background: linear-gradient(135deg, rgba(255, 244, 245, .66), rgba(215, 231, 225, .78)); overflow: hidden; }
+.studio-workspace::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(239, 244, 239, .56), rgba(213, 224, 220, .8)), url("/images/xiupu-scene-clean.png") center 38% / cover no-repeat; opacity: .42; pointer-events: none; }
+.studio-workspace-bar { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: space-between; color: #667572; font: 700 10px var(--sm-mono); letter-spacing: .12em; }
+.studio-back { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(54, 71, 70, .22); border-radius: 999px; padding: 8px 12px; background: rgba(255,255,255,.52); color: #253431; cursor: pointer; }
+.studio-view-tabs { border-color: rgba(54, 71, 70, .18); background: rgba(244, 247, 242, .62); box-shadow: 0 12px 28px rgba(87, 104, 100, .08); backdrop-filter: blur(14px); }
+.studio-view-tabs button { color: #65726f; }
+.studio-view-tabs button.active { background: rgba(255, 250, 233, .92); color: #182126; box-shadow: 0 3px 10px rgba(80, 88, 78, .08); }
+.studio-view-tabs small { color: #778480; }
+.studio-workspace .sm-panel { background: rgba(250, 248, 241, .88); border-color: rgba(48, 59, 57, .28); box-shadow: 0 14px 34px rgba(75, 91, 86, .12); backdrop-filter: blur(12px); }
+.studio-workspace .sm-phead { background: rgba(255, 247, 198, .88); border-bottom-color: rgba(48, 59, 57, .28); }
+.studio-workspace .sm-phead h2 { font-size: 15px; letter-spacing: -.01em; }
+.studio-workspace .sm-lab { color: #6c7a75; }
+.studio-workspace .sm-ta, .studio-workspace .sm-sheet-field, .studio-workspace .sm-sheet-brief { background: rgba(255, 253, 246, .7); border-color: rgba(48, 59, 57, .28); }
+.studio-workspace .sm-ta:focus, .studio-workspace .sm-sheet-field:focus, .studio-workspace .sm-sheet-brief:focus { background: rgba(255, 250, 223, .88); box-shadow: inset 0 0 0 2px rgba(62, 120, 111, .58); }
+.studio-workspace .sm-dcard, .studio-workspace .sm-rg, .studio-workspace .sm-prop, .studio-workspace .sm-issue { background: rgba(255, 253, 246, .76); border-color: rgba(48, 59, 57, .25); }
+.studio-workspace .sm-dcard.active { background: rgba(224, 242, 210, .9); }
+.studio-workspace .sm-chip { background: rgba(255,255,255,.62); border-color: rgba(48,59,57,.3); }
+.studio-workspace .sm-solid { background: #d94a3c; border-color: #96352f; box-shadow: 0 5px 12px rgba(183, 59, 49, .16); }
+.studio-workspace .sm-ghost { background: rgba(255,255,255,.55); border-color: rgba(48,59,57,.28); }
+.studio-workspace .sm-table td { background: rgba(255, 253, 246, .78); }
+.studio-workspace .sm-table tr:nth-child(even) td { background: rgba(244, 239, 222, .78); }
+.studio-workspace .sm-table th { border-color: rgba(48,59,57,.26); }
+.studio-workspace .sm-twrap { border-bottom-color: rgba(48,59,57,.26); }
 .studio-workspace .sm-panel, .studio-workspace .sm-panel button, .studio-workspace .sm-panel label, .studio-workspace .sm-panel p, .studio-workspace .sm-panel span, .studio-workspace .sm-panel strong, .studio-workspace .sm-panel b { color: var(--sm-ink); }
 .studio-workspace .sm-panel .sm-phead h2, .studio-workspace .sm-panel .sm-lab { color: var(--sm-ink); }
 .studio-workspace .sm-panel .sm-lab { color: var(--sm-muted); }
