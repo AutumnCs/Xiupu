@@ -1,5 +1,6 @@
 import { request } from "@/lib/api/request";
 import type { PerformanceDraft, PlanSnapshot, ProjectBrief, StructuredRequirement } from "@/lib/agents/types";
+import type { ProjectApprovalStatus } from "@/lib/project-state/project-governance";
 
 export type ProjectSnapshot = {
   project: ProjectBrief;
@@ -10,6 +11,7 @@ export type ProjectSnapshot = {
   v2: PlanSnapshot | null;
   current: "v1" | "v2";
   feedback: string;
+  approvalStatus?: ProjectApprovalStatus;
 };
 
 export type ProjectListItem = { id: string; title: string; share_token: string; updated_at: string };

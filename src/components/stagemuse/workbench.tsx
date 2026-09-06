@@ -15,6 +15,7 @@ import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-e
 import { getNextImpact } from "@/lib/project-state/impact-queue";
 import { buildProjectBrief } from "@/lib/project-state/project-brief";
 import { mergeClarificationsIntoBrief } from "@/lib/project-state/clarifications";
+import { canEditProject, toProjectSource, type ProjectApprovalStatus } from "@/lib/project-state/project-governance";
 import type {
   StructuredRequirement,
   CreativeDirection,
@@ -67,6 +68,7 @@ export function Workbench() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [savedProjects, setSavedProjects] = useState<ProjectListItem[]>([]);
   const [databaseVersions, setDatabaseVersions] = useState<VersionListItem[]>([]);
+  const [approvalStatus, setApprovalStatus] = useState<ProjectApprovalStatus>("draft");
 
   function restoreSnapshot(snapshot: ProjectSnapshot, metadata?: { id?: string; shareToken?: string; shareUrl?: string }) {
     if (metadata?.id) setProjectId(metadata.id);
@@ -83,6 +85,7 @@ export function Workbench() {
     setV2(snapshot.v2);
     setCurrent(snapshot.current);
     setFeedback(snapshot.feedback);
+    setApprovalStatus(snapshot.approvalStatus || "draft");
     setImpactReport(null);
     setSkippedImpactIds(new Set());
     setConfirmedImpactTitles([]);
@@ -148,7 +151,7 @@ export function Workbench() {
     if (!v1) return toast.error(t("stagemuse.toast.needPlan"));
     setLoading("save");
     try {
-      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback };
+      const snapshot: ProjectSnapshot = { project, requirement, performanceV1, performanceV2, v1, v2, current, feedback, approvalStatus };
       const saved = await saveProject(snapshot, projectId, shareToken);
       setProjectId(saved.id);
       setShareToken(saved.shareToken);
@@ -180,14 +183,19 @@ export function Workbench() {
   const activePlan = current === "v2" && v2 ? v2 : v1;
   const activePerformance = current === "v2" && performanceV2 ? performanceV2 : performanceV1;
   const nextImpact = impactReport ? getNextImpact(impactReport, skippedImpactIds) : null;
+  const editable = canEditProject(approvalStatus);
+
+  function updateProjectField(field: keyof ProjectBrief, value: string) {
+    setProject((current) => ({ ...current, [field]: value }));
+  }
 
   // ---- 节点 1：解析需求 ----
   async function onParse() {
-    const rawBrief = brief.trim() || project.programMaterial.trim() || project.directorRequirements.trim() || projectMaterials.trim();
+    const rawBrief = toProjectSource({ ...project, programMaterial: project.programMaterial || brief, supportingMaterials: project.supportingMaterials || projectMaterials });
     if (!rawBrief) return toast.error(t("stagemuse.toast.needInput"));
     setLoading("parse");
     try {
-      const nextProject = { ...buildProjectBrief(rawBrief, project.supportingMaterials || projectMaterials), projectName: project.projectName.trim() || "未命名节目" };
+      const nextProject = { ...buildProjectBrief(rawBrief, project.supportingMaterials || projectMaterials), ...project, projectName: project.projectName.trim() || "未命名节目", programMaterial: project.programMaterial || brief || rawBrief, supportingMaterials: project.supportingMaterials || projectMaterials };
       setProject(nextProject);
       const r = await stageMuseApi.parseRequirement([
         `项目资料：${rawBrief}`, nextProject.supportingMaterials && `补充资料：${nextProject.supportingMaterials}`,
@@ -221,7 +229,7 @@ export function Workbench() {
     setCurrent("v1");
     setLoading("parse");
     try {
-      const nextProject = { ...buildProjectBrief(nextBrief, project.supportingMaterials || projectMaterials), projectName: project.projectName.trim() || "未命名节目" };
+      const nextProject = { ...buildProjectBrief(nextBrief, project.supportingMaterials || projectMaterials), ...project, projectName: project.projectName.trim() || "未命名节目", programMaterial: project.programMaterial || nextBrief, supportingMaterials: project.supportingMaterials || projectMaterials };
       setProject(nextProject);
       const r = await stageMuseApi.parseRequirement(`项目资料：${nextBrief}\n\n补充资料：${nextProject.supportingMaterials || "无"}`);
       setRequirement(r.data);
@@ -385,7 +393,16 @@ export function Workbench() {
           </div>
           {!requirement ? (
             <div className="p-3">
-              <textarea className="sm-ta min-h-56" value={brief} onChange={(event) => setBrief(event.target.value)} placeholder={t("stagemuse.req.placeholder")} />
+              <textarea className="sm-ta min-h-40" value={brief} disabled={!editable} onChange={(event) => setBrief(event.target.value)} placeholder={t("stagemuse.req.placeholder")} />
+              <p className="mt-3 text-[11px] font-black" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.project.box")}</p>
+              <div className="mt-2 grid gap-2">
+                <input className="sm-ta min-h-0" value={project.projectName} disabled={!editable} onChange={(event) => updateProjectField("projectName", event.target.value)} placeholder={t("stagemuse.project.name")} />
+                <textarea className="sm-ta" value={project.directorRequirements} disabled={!editable} onChange={(event) => updateProjectField("directorRequirements", event.target.value)} placeholder={t("stagemuse.project.director")} />
+                <textarea className="sm-ta" value={project.programMaterial} disabled={!editable} onChange={(event) => updateProjectField("programMaterial", event.target.value)} placeholder={t("stagemuse.project.program")} />
+                <textarea className="sm-ta" value={project.performers} disabled={!editable} onChange={(event) => updateProjectField("performers", event.target.value)} placeholder={t("stagemuse.project.performers")} />
+                <textarea className="sm-ta" value={project.stageConditions} disabled={!editable} onChange={(event) => updateProjectField("stageConditions", event.target.value)} placeholder={t("stagemuse.project.stage")} />
+                <textarea className="sm-ta" value={project.creativeIntent} disabled={!editable} onChange={(event) => updateProjectField("creativeIntent", event.target.value)} placeholder={t("stagemuse.project.creative")} />
+              </div>
               <label className="sm-ghost mt-2 inline-flex cursor-pointer items-center">
                 {t("stagemuse.req.importText")}
                 <input className="sr-only" type="file" accept=".txt,.md,.docx,.pdf,text/plain,text/markdown,application/pdf" multiple onChange={(event) => void onMaterialFiles(event.target.files)} />
@@ -393,14 +410,15 @@ export function Workbench() {
               <textarea
                 className="sm-ta mt-2"
                 value={project.supportingMaterials}
+                disabled={!editable}
                 onChange={(e) => { setProjectMaterials(e.target.value); setProject((value) => ({ ...value, supportingMaterials: e.target.value })); }}
                 placeholder={t("stagemuse.req.materialsPlaceholder")}
               />
               <div className="mt-2.5 flex gap-2">
-                <button className="sm-solid" onClick={onParse} disabled={loading === "parse"}>
+                <button className="sm-solid" onClick={onParse} disabled={loading === "parse" || !editable}>
                   {loading === "parse" ? t("stagemuse.req.parsing") : t("stagemuse.req.parse")}
                 </button>
-                <button className="sm-ghost" onClick={() => { setBrief(CASE_BRIEF); setProject((value) => ({ ...value, projectName: "科技品牌开场秀", directorRequirements: CASE_BRIEF, programMaterial: "3分钟开场节目", performers: "12名舞者（含1名领舞）", stageConditions: "主LED屏，左右两个出入口", creativeIntent: "克制到连接再到爆发" })); }}>
+                <button className="sm-ghost" disabled={!editable} onClick={() => { setBrief(CASE_BRIEF); setProject((value) => ({ ...value, projectName: "科技品牌开场秀", directorRequirements: CASE_BRIEF, programMaterial: "3分钟开场节目", performers: "12名舞者（含1名领舞）", stageConditions: "主LED屏，左右两个出入口", creativeIntent: "克制到连接再到爆发" })); }}>
                   {t("stagemuse.req.loadCase")}
                 </button>
               </div>
@@ -471,7 +489,7 @@ export function Workbench() {
 
       {/* ============ CENTER ============ */}
       <div className="grid content-start gap-2.5">
-        {activePerformance && <PerformanceEditor performance={activePerformance} readOnly={current === "v2"} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} />}
+        {activePerformance && <PerformanceEditor performance={activePerformance} readOnly={current === "v2" || !editable} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} />}
         {performanceV1 && !v1 && <button className="sm-solid w-full" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
         {activePlan && <CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} />}
         <section className="sm-panel">
@@ -492,6 +510,9 @@ export function Workbench() {
                   <input type="checkbox" checked={showDiff} onChange={(e) => setShowDiff(e.target.checked)} />
                   {t("stagemuse.version.highlight")}
                 </label>
+                <span className={`sm-chip ${approvalStatus === "locked" ? "red" : approvalStatus === "confirmed" ? "green" : ""}`}>{t(`stagemuse.approval.${approvalStatus}`)}</span>
+                <button className="sm-ghost px-2 py-1 text-[10px]" onClick={() => setApprovalStatus(approvalStatus === "locked" ? "confirmed" : "locked")}>{t(approvalStatus === "locked" ? "stagemuse.approval.unlock" : "stagemuse.approval.lock")}</button>
+                {approvalStatus === "draft" && <button className="sm-ghost px-2 py-1 text-[10px]" onClick={() => setApprovalStatus("confirmed")}>{t("stagemuse.approval.confirm")}</button>}
               </div>
             )}
           </div>
@@ -550,7 +571,7 @@ export function Workbench() {
                             <td
                               key={c}
                               className={changed ? "chg" : ""}
-                              contentEditable
+                              contentEditable={editable}
                               suppressContentEditableWarning
                               onBlur={(e) => editCell(ri, c, e.currentTarget.textContent ?? "")}
                             >

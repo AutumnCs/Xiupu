@@ -103,7 +103,8 @@
       "genDir": "Generate directions",
       "generating": "Generating…"
     },
-    "project": { "name": "Project name (optional; it can be inferred)", "program": "Program material: content, duration, order, and more", "performers": "Cast: count, roles, and constraints", "stage": "Stage conditions: LED, entrances, constraints" },
+    "project": { "box": "Project materials · used by every generation", "name": "Project name (optional; it can be inferred)", "director": "Director / client requirements: constraints and non-negotiables", "program": "Program material: content, duration, order, and more", "performers": "Cast: count, roles, and constraints", "stage": "Stage conditions: LED, entrances, constraints", "creative": "My creative intent: arc, visual mood, key images, transitions" },
+    "approval": { "draft": "Pending", "confirmed": "Confirmed", "locked": "Locked", "confirm": "Confirm", "lock": "Lock", "unlock": "Unlock" },
     "dir": {
       "title": "Creative Directions",
       "hint": "Pick one direction",
