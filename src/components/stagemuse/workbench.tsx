@@ -12,9 +12,11 @@ import { PerformanceEditor } from "./performance-editor";
 import { VisualReferencePanel } from "./visual-reference-panel";
 import { ProjectIntelligencePanel } from "./project-intelligence-panel";
 import { ProgramListEditor } from "./program-list-editor";
+import { ProgramNavigator } from "./program-navigator";
 import { CueImporter } from "./cue-importer";
 import { createRequirementItem, toggleRequirementLock, type RequirementItem } from "@/lib/project-state/requirements";
 import { buildDepartmentCueSheet } from "@/lib/project-state/department-export";
+import { getCueIndexesForProgram } from "@/lib/project-state/program-workspace";
 import { isTextMaterial } from "@/lib/project-state/materials";
 import { type EditableCueField, updatePlanRow } from "@/lib/project-state/plan-edit";
 import { getNextImpact } from "@/lib/project-state/impact-queue";
@@ -63,6 +65,7 @@ export function Workbench() {
   const [v2, setV2] = useState<PlanSnapshot | null>(null);
   const [current, setCurrent] = useState<"v1" | "v2">("v1");
   const [selectedCueIndex, setSelectedCueIndex] = useState<number | null>(null);
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [showDiff, setShowDiff] = useState(true);
   const [feedback, setFeedback] = useState("");
   const [impactReport, setImpactReport] = useState<ImpactReport | null>(null);
@@ -102,6 +105,7 @@ export function Workbench() {
     setApprovalStatus(snapshot.approvalStatus || "draft");
     setRevisionRecords(snapshot.revisionRecords || []);
     setAgentRuns(snapshot.agentRuns || []);
+    setSelectedProgramId(null);
     setImpactReport(null);
     setSkippedImpactIds(new Set());
     setConfirmedImpactTitles([]);
@@ -227,6 +231,7 @@ export function Workbench() {
 
   function updatePrograms(programs: NonNullable<ProjectBrief["programs"]>) {
     setProject((current) => ({ ...current, programs }));
+    setSelectedProgramId((current) => current && !programs.some((program) => program.id === current) ? null : current);
   }
 
   function updateCreatorProfile(profile: CreatorProfile) {
@@ -571,7 +576,7 @@ export function Workbench() {
           )}
         </section>
 
-        <ProgramListEditor material={project.programMaterial || brief} programs={project.programs || []} editable={editable} onChange={updatePrograms} />
+        <ProgramListEditor material={project.programMaterial || brief} programs={project.programs || []} selectedProgramId={selectedProgramId} editable={editable} onSelect={setSelectedProgramId} onChange={updatePrograms} />
 
         <ProjectIntelligencePanel project={project} requirement={requirement} plan={activePlan} runs={agentRuns} editable={editable} onProfileChange={updateCreatorProfile} />
 
@@ -623,8 +628,9 @@ export function Workbench() {
       <div className="grid content-start gap-2.5">
         {activePerformance && <div className="creative-only"><PerformanceEditor performance={activePerformance} readOnly={current === "v2" || !editable} onChange={(next) => { if (current === "v2") setPerformanceV2(next); else { setPerformanceV1(next); setV1(null); setImpactReport(null); } }} /></div>}
         {performanceV1 && !v1 && <button className="sm-solid w-full creative-only" onClick={onGeneratePlan} disabled={loading === "plan"}>{loading === "plan" ? t("stagemuse.plan.loading") : t("stagemuse.performance.generateCue")}</button>}
+        {activePlan && <ProgramNavigator programs={project.programs || []} plan={activePlan} selectedProgramId={selectedProgramId} onSelect={setSelectedProgramId} />}
         <CueImporter programs={project.programs || []} editable={editable} onImport={onImportCuePlan} />
-        {activePlan && <div className="execution-only"><CueTimeline plan={activePlan} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} editable={editable} onStatusChange={setCueStatus} /></div>}
+        {activePlan && <div className="execution-only"><CueTimeline plan={activePlan} visibleIndexes={getCueIndexesForProgram(activePlan.rows, (project.programs || []).find((program) => program.id === selectedProgramId) || null)} selected={selectedCueIndex} onSelect={setSelectedCueIndex} onEdit={editCell} editable={editable} onStatusChange={setCueStatus} /></div>}
         <section className="sm-panel execution-only">
           <div className="sm-phead">
             <div>

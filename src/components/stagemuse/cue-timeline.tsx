@@ -8,6 +8,7 @@ import { getCueContext, type CueStatus } from "@/lib/project-state/cue-core";
 
 type CueTimelineProps = {
   plan: PlanSnapshot;
+  visibleIndexes?: number[];
   selected: number | null;
   onSelect: (index: number) => void;
   onEdit: (index: number, field: EditableCueField, value: string) => void;
@@ -16,13 +17,15 @@ type CueTimelineProps = {
 };
 
 /** 单一 Cue 序列：时间、内容和可编辑焦点共用同一选择状态。 */
-export function CueTimeline({ plan, selected, onSelect, onEdit, editable, onStatusChange }: CueTimelineProps) {
+export function CueTimeline({ plan, visibleIndexes, selected, onSelect, onEdit, editable, onStatusChange }: CueTimelineProps) {
   const { t } = useTranslation();
-  const activeIndex = selected ?? 0;
+  const shownIndexes = visibleIndexes || plan.rows.map((_, index) => index);
+  const activeIndex = selected !== null && shownIndexes.includes(selected) ? selected : shownIndexes[0] ?? 0;
   const activeRow = plan.rows[activeIndex];
   const ranges = getCueTimelineRanges(plan.rows);
-  const start = ranges.length ? Math.min(...ranges.map((range) => range.startSeconds)) : 0;
-  const end = ranges.length ? Math.max(...ranges.map((range) => range.startSeconds + range.durationSeconds)) : start;
+  const shownRanges = shownIndexes.map((index) => ranges[index]);
+  const start = shownRanges.length ? Math.min(...shownRanges.map((range) => range.startSeconds)) : 0;
+  const end = shownRanges.length ? Math.max(...shownRanges.map((range) => range.startSeconds + range.durationSeconds)) : start;
   const context = getCueContext(plan, activeIndex);
   const canEditCue = editable && activeRow?.status !== "locked";
 
@@ -30,7 +33,7 @@ export function CueTimeline({ plan, selected, onSelect, onEdit, editable, onStat
     <section className="sm-panel">
       <div className="sm-phead">
         <div><h2>{t("stagemuse.timeline.title")}</h2><span className="sm-lab">{plan.segmentLabel}</span></div>
-        <span className="sm-lab">{t("stagemuse.timeline.cueCount", { count: plan.rows.length })}</span>
+        <span className="sm-lab">{t("stagemuse.timeline.cueCount", { count: shownIndexes.length })}</span>
       </div>
       <div className="p-3">
         <p className="mb-2 text-[11px]" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.timeline.hint")}</p>
@@ -38,7 +41,8 @@ export function CueTimeline({ plan, selected, onSelect, onEdit, editable, onStat
           <span>{formatSeconds(start)}</span><span>{formatSeconds(end)}</span>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2" aria-label={t("stagemuse.timeline.title")}>
-          {plan.rows.map((row, index) => {
+          {shownIndexes.map((index) => {
+            const row = plan.rows[index];
             const range = ranges[index];
             const width = Math.max(142, Math.round((range.durationSeconds / Math.max(end - start, 1)) * 460));
             return (
@@ -58,7 +62,8 @@ export function CueTimeline({ plan, selected, onSelect, onEdit, editable, onStat
             );
           })}
         </div>
-        {activeRow && (
+        {!shownIndexes.length && <p className="sm-empty">{t("stagemuse.program.emptyCue")}</p>}
+        {activeRow && shownIndexes.length > 0 && (
           <div className="mt-2 rounded-xl border-2 border-[var(--sm-line)] bg-[#fffbee] p-3">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b-2 border-[var(--sm-line)] pb-2">
               <div><b className="text-sm">{t("stagemuse.timeline.cue", { n: activeIndex + 1 })}</b><p className="mt-1 text-[10px]" style={{ color: "var(--sm-muted)" }}>{context.previous || t("stagemuse.cue.noPrevious")} → {context.next || t("stagemuse.cue.noNext")}</p></div>
