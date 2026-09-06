@@ -355,3 +355,26 @@ body {
 @media (max-width: 1100px) { .navigation-rail nav { padding-left: 9px; padding-right: 9px; }.nav-item { gap: 10px; padding: 0 9px; }.project-card { width: 27%; }.creation-dock { left: 24%; width: 65%; } }
 @media (max-width: 760px) { .xiupu-home { --u: .75px; min-height: 760px; }.masthead { height: 76px; padding: 0 22px; }.wordmark { font-size: 27px; width: auto; }.brand-caption { margin-left: 18px; font-size: 8px; max-width: 120px; white-space: normal; line-height: 1.7; }.search-box { display: none; }.navigation-rail { top: 76px; width: 64px; border-top-right-radius: 22px; }.navigation-rail nav { padding-top: 20px; gap: 10px; padding-left: 10px; padding-right: 10px; }.nav-item { justify-content: center; padding: 0; height: 44px; border-radius: 14px; }.nav-item span, .rail-footer { display: none; }.intro-copy { top: 110px; left: 90px; }.intro-copy h1 { font-size: 44px; line-height: .95; }.chinese-caption { font-size: 10px; letter-spacing: .25em; margin: 16px 0 20px; }.project-card { top: 100px; right: 20px; width: 180px; height: 63px; min-height: 63px; padding: 9px; border-radius: 15px; gap: 9px; }.project-thumbnail { width: 43px; height: 40px; }.project-copy strong { font-size: 10px; }.project-copy small { font-size: 9px; }.project-arrow, .right-caption, .creative-index, .orb-annotations { display: none; }.orb-hit-area { width: 58vw; }.creation-dock { top: auto; bottom: 28px; left: 84px; width: calc(100% - 104px); }.prompt-bar { min-height: 66px; padding-left: 15px; gap: 9px; border-radius: 19px; }.prompt-bar input { font-size: 12px; }.attach-button { display: none; }.send-button { min-width: 37px; min-height: 37px; }.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }.quick-actions button { font-size: 9px; padding: 0 8px; min-height: 35px; gap: 6px; } }
 @media (prefers-reduced-motion: reduce) { .xiupu-home *, .xiupu-home *::before, .xiupu-home *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+/* Structured input sheet: one continuous surface with recognizable field rows. */
+.sm-input-sheet { margin: 12px; overflow: hidden; border: 2px solid var(--sm-line); border-radius: 18px; background: var(--sm-paper); }
+.sm-sheet-brief { display: block; width: 100%; min-height: 118px; resize: vertical; border: 0; border-bottom: 1px solid var(--sm-line); border-radius: 0; background: transparent; padding: 16px; color: var(--sm-ink); font-size: 13px; line-height: 1.55; outline: 0; }
+.sm-sheet-heading { padding: 13px 16px 8px; color: var(--sm-muted); font-size: 11px; font-weight: 900; letter-spacing: .02em; }
+.sm-sheet-fields { display: grid; }
+.sm-sheet-field { display: block; width: 100%; min-height: 62px; resize: vertical; border: 0; border-top: 1px solid rgba(41, 38, 33, .12); border-radius: 0; background: transparent; padding: 14px 16px; color: var(--sm-ink); font-size: 13px; line-height: 1.55; outline: 0; }
+.sm-sheet-field:focus, .sm-sheet-brief:focus { background: rgba(255, 247, 211, .54); box-shadow: inset 3px 0 0 var(--sm-red); }
+.sm-input-sheet > .sm-ghost { margin: 10px 12px 0; }
+.sm-input-sheet > .sm-sheet-fields + .sm-ghost { margin-top: 10px; }
+.sm-input-sheet > .sm-ta { margin: 10px 12px 0; width: calc(100% - 24px); }
+.sm-input-sheet > .mt-2\.5 { margin: 10px 12px 12px; }
+.sm-input-sheet .sm-sheet-field::placeholder, .sm-input-sheet .sm-sheet-brief::placeholder { color: #8a8174; opacity: 1; }
+
+/* Keep parsed requirement groups readable without turning every row into a floating card. */
+.sm-rg { overflow: hidden; border: 2px solid var(--sm-line); border-radius: 16px; background: var(--sm-paper); margin-bottom: 10px; }
+.sm-rg-t { padding: 10px 12px; border-bottom: 1px solid var(--sm-line); font-size: 12px; font-weight: 900; }
+.sm-rg ul { margin: 0; padding: 0; list-style: none; }
+.sm-rg-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 9px 10px 9px 12px; border-bottom: 1px solid rgba(41, 38, 33, .12); }
+.sm-rg-item:last-child { border-bottom: 0; }
+.sm-rg-input { width: 100%; min-height: 42px; resize: vertical; border: 0; background: transparent; padding: 4px 0; color: var(--sm-ink); font-size: 12px; line-height: 1.45; outline: 0; }
+.sm-rg-input:focus { box-shadow: inset 3px 0 0 var(--sm-red); padding-left: 8px; }
+.sm-rg-actions { display: flex; gap: 4px; }

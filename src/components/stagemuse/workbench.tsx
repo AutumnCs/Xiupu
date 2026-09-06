@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
+import { Clipboard, Download, Lock, LockKeyholeOpen, Trash2 } from "lucide-react";
 import { stageMuseApi } from "@/lib/api/stagemuse";
 import { listProjectVersions, listProjects, loadProjectShare, loadProjectVersion, saveProject, type ProjectListItem, type ProjectSnapshot, type RevisionRecord, type VersionListItem } from "@/lib/api/projects";
 import { FormationSvg } from "./formation-svg";
@@ -421,16 +421,16 @@ export function Workbench() {
             <span className="sm-lab">INPUT / BASELINE</span>
           </div>
           {!requirement ? (
-            <div className="p-3">
-              <textarea className="sm-ta min-h-40" value={brief} disabled={!editable} onChange={(event) => setBrief(event.target.value)} placeholder={t("stagemuse.req.placeholder")} />
-              <p className="mt-3 text-[11px] font-black" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.project.box")}</p>
-              <div className="mt-2 grid gap-2">
-                <input className="sm-ta min-h-0" value={project.projectName} disabled={!editable} onChange={(event) => updateProjectField("projectName", event.target.value)} placeholder={t("stagemuse.project.name")} />
-                <textarea className="sm-ta" value={project.directorRequirements} disabled={!editable} onChange={(event) => updateProjectField("directorRequirements", event.target.value)} placeholder={t("stagemuse.project.director")} />
-                <textarea className="sm-ta" value={project.programMaterial} disabled={!editable} onChange={(event) => updateProjectField("programMaterial", event.target.value)} placeholder={t("stagemuse.project.program")} />
-                <textarea className="sm-ta" value={project.performers} disabled={!editable} onChange={(event) => updateProjectField("performers", event.target.value)} placeholder={t("stagemuse.project.performers")} />
-                <textarea className="sm-ta" value={project.stageConditions} disabled={!editable} onChange={(event) => updateProjectField("stageConditions", event.target.value)} placeholder={t("stagemuse.project.stage")} />
-                <textarea className="sm-ta" value={project.creativeIntent} disabled={!editable} onChange={(event) => updateProjectField("creativeIntent", event.target.value)} placeholder={t("stagemuse.project.creative")} />
+            <div className="sm-input-sheet">
+              <textarea className="sm-sheet-brief" value={brief} disabled={!editable} onChange={(event) => setBrief(event.target.value)} placeholder={t("stagemuse.req.placeholder")} />
+              <div className="sm-sheet-heading">{t("stagemuse.project.box")}</div>
+              <div className="sm-sheet-fields">
+                <input className="sm-sheet-field" value={project.projectName} disabled={!editable} onChange={(event) => updateProjectField("projectName", event.target.value)} placeholder={t("stagemuse.project.name")} />
+                <textarea className="sm-sheet-field" value={project.directorRequirements} disabled={!editable} onChange={(event) => updateProjectField("directorRequirements", event.target.value)} placeholder={t("stagemuse.project.director")} />
+                <textarea className="sm-sheet-field" value={project.programMaterial} disabled={!editable} onChange={(event) => updateProjectField("programMaterial", event.target.value)} placeholder={t("stagemuse.project.program")} />
+                <textarea className="sm-sheet-field" value={project.performers} disabled={!editable} onChange={(event) => updateProjectField("performers", event.target.value)} placeholder={t("stagemuse.project.performers")} />
+                <textarea className="sm-sheet-field" value={project.stageConditions} disabled={!editable} onChange={(event) => updateProjectField("stageConditions", event.target.value)} placeholder={t("stagemuse.project.stage")} />
+                <textarea className="sm-sheet-field" value={project.creativeIntent} disabled={!editable} onChange={(event) => updateProjectField("creativeIntent", event.target.value)} placeholder={t("stagemuse.project.creative")} />
               </div>
               <label className="sm-ghost mt-2 inline-flex cursor-pointer items-center">
                 {t("stagemuse.req.importText")}
@@ -788,6 +788,13 @@ function DepartmentRequirements({ plan, selectedCueIndex, onSelectCue }: { plan:
   const [department, setDepartment] = useState<(typeof DEPARTMENT_FIELDS)[number]>("music");
   const fieldFor = (row: PlanRow, key: (typeof DEPARTMENT_FIELDS)[number]) => key === "performer" ? row.formationNote : row[key];
   const requirements = plan.rows.map((row, cueIndex) => ({ cueIndex, time: row.time, content: fieldFor(row, department) })).filter((item) => item.content && item.content !== "无");
+  const exportText = [
+    `# ${t(`stagemuse.department.${department}`)} · Cue 清单`,
+    "",
+    ...requirements.map((item) => `## ${t("stagemuse.department.cue", { n: item.cueIndex + 1 })} · ${item.time}\n${item.content}`),
+  ].join("\n\n");
+  const copyRequirements = async () => { try { await navigator.clipboard.writeText(exportText); toast.success(t("stagemuse.department.copied")); } catch { toast.error(t("stagemuse.department.copyFailed")); } };
+  const downloadRequirements = () => { const url = URL.createObjectURL(new Blob([exportText], { type: "text/markdown;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = `${t(`stagemuse.department.${department}`)}-cue.md`; link.click(); URL.revokeObjectURL(url); toast.success(t("stagemuse.department.downloaded")); };
   return (
     <section className="sm-panel">
       <div className="sm-phead"><h2>{t("stagemuse.department.title")}</h2><span className="sm-lab">{t("stagemuse.department.autoExtract")}</span></div>
@@ -799,7 +806,7 @@ function DepartmentRequirements({ plan, selectedCueIndex, onSelectCue }: { plan:
             </button>
           ))}
         </div>
-        <p className="mt-3 text-[11px]" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.department.hint")}</p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><p className="text-[11px]" style={{ color: "var(--sm-muted)" }}>{t("stagemuse.department.hint")}</p><div className="flex gap-1.5"><button type="button" className="sm-ghost inline-flex items-center gap-1 px-2 py-1 text-[10px]" onClick={() => void copyRequirements()} disabled={!requirements.length}><Clipboard size={13} />{t("stagemuse.department.copy")}</button><button type="button" className="sm-ghost inline-flex items-center gap-1 px-2 py-1 text-[10px]" onClick={downloadRequirements} disabled={!requirements.length}><Download size={13} />{t("stagemuse.department.download")}</button></div></div>
         <div className="mt-2 space-y-2">
           {requirements.map((item) => (
             <button key={item.cueIndex} type="button" onClick={() => onSelectCue(item.cueIndex)} className={`block w-full rounded-xl border-2 p-3 text-left ${selectedCueIndex === item.cueIndex ? "border-[var(--sm-red)] bg-[var(--sm-cream)]" : "border-[var(--sm-line)] bg-[#fffbee]"}`}>
